@@ -11,6 +11,7 @@ export enum ChatStep {
 }
 
 export interface UserSession {
+  chatId: string;
   phone: string;
   name?: string;
   location?: string;

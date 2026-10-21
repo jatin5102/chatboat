@@ -16,7 +16,96 @@ function formatPhone(phone: string): string {
   if (digits.length === 10) {
     return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
   }
-  return digits.startsWith('+') ? digits : `+${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length >= 11 && digits.startsWith('44')) {
+    return `+44 ${digits.slice(2)}`;
+  }
+  if (digits.length >= 12 && digits.startsWith('971')) {
+    return `+971 ${digits.slice(3)}`;
+  }
+  return `+${digits}`;
+}
+
+/**
+ * Resolves the user's actual phone number.
+ * Modern WhatsApp Web uses internal @lid identifiers for linked devices and privacy.
+ * This resolver converts @lid -> actual phone number (PN).
+ */
+export async function resolveRealPhoneNumber(
+  client: Client,
+  message: Message
+): Promise<string> {
+  const from = message.from;
+
+  // 1. If message.from already ends with @c.us, it is directly the real phone number
+  if (from && from.endsWith('@c.us')) {
+    const rawNum = from.replace('@c.us', '').replace(/\D/g, '');
+    if (rawNum.length >= 10 && rawNum.length <= 13) {
+      return rawNum;
+    }
+  }
+
+  // 2. Query WhatsApp Web's internal LID-to-Phone resolver via client
+  try {
+    if (typeof (client as any).getContactLidAndPhone === 'function') {
+      const res = await (client as any).getContactLidAndPhone(from);
+      if (Array.isArray(res) && res.length > 0 && res[0]?.pn) {
+        const pnDigits = res[0].pn.replace(/@.*$/, '').replace(/\D/g, '');
+        if (pnDigits.length >= 10 && pnDigits.length <= 13) {
+          console.log(`[Phone Resolver] Successfully mapped LID ${from} -> Real Phone: ${pnDigits}`);
+          return pnDigits;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Phone Resolver] getContactLidAndPhone error:', err);
+  }
+
+  // 3. Query Contact model
+  try {
+    const contact = await message.getContact();
+    if (contact) {
+      if (contact.number && /^\d{10,13}$/.test(contact.number)) {
+        return contact.number;
+      }
+      if (contact.id?.server === 'c.us' && /^\d{10,13}$/.test(contact.id.user)) {
+        return contact.id.user;
+      }
+      if (typeof contact.getFormattedNumber === 'function') {
+        const formatted = await contact.getFormattedNumber();
+        const digits = formatted.replace(/\D/g, '');
+        if (digits.length >= 10 && digits.length <= 13) {
+          return digits;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Phone Resolver] getContact error:', err);
+  }
+
+  // 4. Fallback: inspect raw message _data
+  const msgData = (message as any)._data;
+  if (msgData) {
+    const candidates = [
+      msgData.id?.participant,
+      msgData.author,
+      msgData.from,
+      msgData.to
+    ];
+    for (const c of candidates) {
+      if (typeof c === 'string' && c.endsWith('@c.us')) {
+        const d = c.replace('@c.us', '').replace(/\D/g, '');
+        if (d.length >= 10 && d.length <= 13) {
+          return d;
+        }
+      }
+    }
+  }
+
+  // 5. Ultimate fallback: remove @... suffix
+  return from.replace(/@.*$/, '').replace(/\D/g, '');
 }
 
 export class BotService {
@@ -27,14 +116,19 @@ export class BotService {
     }
 
     const rawText = (message.body || '').trim();
-    const cleanPhone = message.from.replace('@c.us', '');
-    const session = sessionService.getSession(cleanPhone);
+    const chatId = message.from;
+    const realPhone = await resolveRealPhoneNumber(client, message);
+    const session = sessionService.getSession(chatId, realPhone);
+
+    if (realPhone && (!session.phone || session.phone.length > 13 || session.phone !== realPhone)) {
+      sessionService.updateSession(chatId, { phone: realPhone });
+    }
 
     const lowerText = rawText.toLowerCase();
 
     // Global reset keywords
     if (['restart', 'reset'].includes(lowerText)) {
-      sessionService.resetSession(cleanPhone);
+      sessionService.resetSession(chatId, realPhone);
       await this.sendWelcomeAndAskName(client, message.from);
       return;
     }
@@ -55,14 +149,17 @@ export class BotService {
           return;
         }
 
-        sessionService.updateSession(cleanPhone, {
+        sessionService.updateSession(chatId, {
           name: rawText,
           step: ChatStep.AWAITING_LOCATION
         });
 
+        const displayPhone = formatPhone(session.phone || realPhone);
         await client.sendMessage(
           message.from,
-          `Nice to connect with you, *${rawText}*! 😊\n\nWhich *City or Locality* are you currently exploring properties in?\n*(e.g. Gurgaon, Bangalore, Mumbai, Pune, Noida)*`
+          `Nice to connect with you, *${rawText}*! 😊\n` +
+          `📱 Registered WhatsApp: *${displayPhone}*\n\n` +
+          `Which *City or Locality* are you currently exploring properties in?\n*(e.g. Gurgaon, Bangalore, Mumbai, Pune, Noida)*`
         );
         break;
       }
@@ -76,7 +173,7 @@ export class BotService {
           return;
         }
 
-        sessionService.updateSession(cleanPhone, {
+        sessionService.updateSession(chatId, {
           location: rawText,
           step: ChatStep.AWAITING_ROLE
         });
@@ -90,7 +187,7 @@ export class BotService {
 
       case ChatStep.AWAITING_ROLE: {
         if (rawText === '1') {
-          sessionService.updateSession(cleanPhone, {
+          sessionService.updateSession(chatId, {
             role: 'BUYER',
             step: ChatStep.AWAITING_PROPERTY_SELECTION
           });
@@ -100,7 +197,7 @@ export class BotService {
           );
           await this.sendPropertyList(client, message.from);
         } else if (rawText === '2') {
-          sessionService.updateSession(cleanPhone, {
+          sessionService.updateSession(chatId, {
             role: 'CHANNEL_PARTNER',
             step: ChatStep.AWAITING_RERA
           });
@@ -126,7 +223,7 @@ export class BotService {
           return;
         }
 
-        sessionService.updateSession(cleanPhone, {
+        sessionService.updateSession(chatId, {
           reraNumber: rawText,
           step: ChatStep.AWAITING_PROPERTY_SELECTION
         });
@@ -151,7 +248,7 @@ export class BotService {
         }
 
         const selectedProp = PROPERTIES[choice - 1];
-        sessionService.updateSession(cleanPhone, {
+        sessionService.updateSession(chatId, {
           selectedPropertyId: selectedProp.id,
           step: ChatStep.PROPERTY_MENU
         });
@@ -163,7 +260,7 @@ export class BotService {
       case ChatStep.PROPERTY_MENU: {
         const currentProp = getPropertyById(session.selectedPropertyId || '');
         if (!currentProp) {
-          sessionService.updateSession(cleanPhone, {
+          sessionService.updateSession(chatId, {
             step: ChatStep.AWAITING_PROPERTY_SELECTION
           });
           await this.sendPropertyList(client, message.from);
@@ -176,7 +273,7 @@ export class BotService {
           rawText,
           currentProp,
           session.name || 'Client',
-          cleanPhone
+          session.phone || realPhone
         );
         break;
       }
@@ -189,8 +286,7 @@ export class BotService {
   }
 
   private async sendWelcomeAndAskName(client: Client, to: string): Promise<void> {
-    const cleanPhone = to.replace('@c.us', '');
-    sessionService.updateSession(cleanPhone, { step: ChatStep.AWAITING_NAME });
+    sessionService.updateSession(to, { step: ChatStep.AWAITING_NAME });
 
     const welcomeMsg =
       `👋 *Welcome to Apex Prime Realty Advisory!*\n\n` +
@@ -361,7 +457,7 @@ export class BotService {
       }
 
       case '4': {
-        sessionService.updateSession(userPhone, {
+        sessionService.updateSession(to, {
           step: ChatStep.AWAITING_PROPERTY_SELECTION,
           selectedPropertyId: undefined
         });
@@ -370,7 +466,7 @@ export class BotService {
       }
 
       case '5': {
-        sessionService.resetSession(userPhone);
+        sessionService.resetSession(to, userPhone);
         await this.sendWelcomeAndAskName(client, to);
         break;
       }

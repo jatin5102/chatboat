@@ -3,37 +3,41 @@ import { ChatStep, UserSession } from '../types/index.js';
 export class SessionService {
   private sessions: Map<string, UserSession> = new Map();
 
-  public getSession(phone: string): UserSession {
-    let session = this.sessions.get(phone);
+  public getSession(chatId: string, initialPhone: string = ''): UserSession {
+    let session = this.sessions.get(chatId);
     if (!session) {
       session = {
-        phone,
+        chatId,
+        phone: initialPhone,
         step: ChatStep.INITIAL,
         lastActive: new Date()
       };
-      this.sessions.set(phone, session);
+      this.sessions.set(chatId, session);
+    } else if (initialPhone && (!session.phone || session.phone.length > 13 || session.phone.includes('lid'))) {
+      session.phone = initialPhone;
     }
     return session;
   }
 
-  public updateSession(phone: string, updates: Partial<UserSession>): UserSession {
-    const session = this.getSession(phone);
+  public updateSession(chatId: string, updates: Partial<UserSession>): UserSession {
+    const session = this.getSession(chatId);
     const updated = {
       ...session,
       ...updates,
       lastActive: new Date()
     };
-    this.sessions.set(phone, updated);
+    this.sessions.set(chatId, updated);
     return updated;
   }
 
-  public resetSession(phone: string): UserSession {
+  public resetSession(chatId: string, realPhone: string = ''): UserSession {
     const session: UserSession = {
-      phone,
+      chatId,
+      phone: realPhone,
       step: ChatStep.INITIAL,
       lastActive: new Date()
     };
-    this.sessions.set(phone, session);
+    this.sessions.set(chatId, session);
     return session;
   }
 }
