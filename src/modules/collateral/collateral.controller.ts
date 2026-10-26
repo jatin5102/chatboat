@@ -112,6 +112,32 @@ export const toggleCollateralStatus = asyncHandler(async (req: Request, res: Res
 });
 
 /**
+ * Configure which collaterals are active for a specific project.
+ * Accepts e.g. { activeCodes: ["FLOOR_PLAN", "GALLERY"] }
+ */
+export const configureProjectCollaterals = asyncHandler(async (req: Request, res: Response) => {
+  const projectId = String(req.params.projectId);
+  const { activeCodes } = req.body;
+
+  if (!Array.isArray(activeCodes)) {
+    throw new ApiError(400, "activeCodes must be an array of collateral codes (e.g. ['FLOOR_PLAN', 'GALLERY'])");
+  }
+
+  const result = await collateralService.configureProjectCollaterals(projectId, activeCodes);
+  successResponse(res, 200, `Project collaterals configured successfully: [${activeCodes.join(", ")}] active`, result);
+});
+
+/**
+ * Initialize project-specific collaterals for a project
+ */
+export const initProjectCollaterals = asyncHandler(async (req: Request, res: Response) => {
+  const projectId = String(req.params.projectId);
+  await collateralService.ensureProjectCollaterals(projectId);
+  const result = await collateralService.getAllCollaterals({ projectId });
+  successResponse(res, 201, "Project collaterals initialized successfully", result);
+});
+
+/**
  * Delete a collateral
  */
 export const deleteCollateral = asyncHandler(async (req: Request, res: Response) => {

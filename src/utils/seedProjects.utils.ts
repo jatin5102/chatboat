@@ -3,6 +3,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import sharp from "sharp";
+import { collateralService } from "../services/collateral.service.js";
 
 async function ensureFileExists(
   filePath: string,
@@ -562,6 +563,12 @@ export async function seedProperties() {
         },
       ],
     });
+  }
+
+  // 6. Ensure Each Project Has Its Own Project Collaterals
+  const allProjects = await prisma.projects.findMany();
+  for (const proj of allProjects) {
+    await collateralService.ensureProjectCollaterals(proj.id);
   }
 
   console.log("✅ Seeded M3M Noida Platters, Projects, Documents, Channel Partners & FAQs successfully!");

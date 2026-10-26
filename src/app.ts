@@ -21,6 +21,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static uploaded files from root uploads/ directory
+app.use('/uploads', express.static(path.resolve('uploads')));
+
 // Modular API Routes (/api/v1/platters, /api/platters, etc.)
 app.use('/api/v1', modulesRouter);
 app.use('/api', modulesRouter);

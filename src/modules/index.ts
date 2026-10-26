@@ -4,6 +4,7 @@ import { ChannelPartnerRoutes } from "./channelPartner/channelPartner.route.js";
 import { ProjectRoutes } from "./projects/project.route.js";
 import { ChatbotRoutes } from "./chatbot/chatbot.route.js";
 import { CollateralRoutes } from "./collateral/collateral.route.js";
+import { UploadRoutes } from "./upload/upload.route.js";
 
 const router = Router();
 
@@ -13,5 +14,6 @@ router.use("/channel-partners", ChannelPartnerRoutes);
 router.use("/projects", ProjectRoutes);
 router.use("/chatbot", ChatbotRoutes);
 router.use("/collaterals", CollateralRoutes);
+router.use("/upload", UploadRoutes);
 
 export default router;

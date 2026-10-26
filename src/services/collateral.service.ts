@@ -86,27 +86,32 @@ export class CollateralService {
 
   /**
    * Get active collaterals for a given project (status: true).
-   * Checks for project-specific active collaterals first; falls back to global/master active collaterals.
+   * If a project has its own collaterals in ProjectCollateral table, ONLY the active ones (status === true)
+   * for that project are displayed. It will NOT fall back to global collaterals.
    */
   public async getActiveCollateralsForProject(projectId?: string): Promise<CollateralItem[]> {
     await this.ensureDefaultCollaterals();
 
-    // 1. Check if there are project-specific collaterals
+    // 1. Check if there are project-specific collaterals defined in database
     if (projectId) {
-      const projectSpecific = await prisma.projectCollateral.findMany({
-        where: {
-          projectId,
-          status: true,
-        },
-        orderBy: { seq: "asc" },
+      const projectCollateralCount = await prisma.projectCollateral.count({
+        where: { projectId },
       });
 
-      if (projectSpecific.length > 0) {
-        return projectSpecific;
+      if (projectCollateralCount > 0) {
+        // Project has its own collaterals configured by admin.
+        // Return ONLY the collaterals where status === true for this project.
+        return prisma.projectCollateral.findMany({
+          where: {
+            projectId,
+            status: true,
+          },
+          orderBy: { seq: "asc" },
+        });
       }
     }
 
-    // 2. Fall back to global master active collaterals (where projectId is null)
+    // 2. Fall back to global master active collaterals only if this project has no records at all
     const masterCollaterals = await prisma.projectCollateral.findMany({
       where: {
         projectId: null,
@@ -116,6 +121,116 @@ export class CollateralService {
     });
 
     return masterCollaterals;
+  }
+
+  /**
+   * Initializes default set of collaterals specifically for a project so admin can customize them.
+   */
+  public async ensureProjectCollaterals(projectId: string): Promise<void> {
+    const count = await prisma.projectCollateral.count({
+      where: { projectId },
+    });
+
+    if (count === 0) {
+      await prisma.projectCollateral.createMany({
+        data: [
+          {
+            projectId,
+            code: "BROCHURE",
+            title: "Official PDF Brochure",
+            subtitle: "(Personalized with your Name, Firm & RERA)",
+            icon: "📄",
+            fileType: FileType.document,
+            seq: 1,
+            status: true,
+          },
+          {
+            projectId,
+            code: "GALLERY",
+            title: "High-Res 3D Creatives & Gallery",
+            subtitle: "(Watermarked with your Firm Details)",
+            icon: "🖼️",
+            fileType: FileType.image,
+            seq: 2,
+            status: true,
+          },
+          {
+            projectId,
+            code: "FACTSHEET",
+            title: "Project Factsheet & Specifications",
+            subtitle: "(Amenities, Layouts & Pricing)",
+            icon: "📑",
+            fileType: FileType.document,
+            seq: 3,
+            status: true,
+          },
+          {
+            projectId,
+            code: "FLOOR_PLAN",
+            title: "Master Layout & Floor Plans",
+            subtitle: "(Unit configurations & tower maps)",
+            icon: "📐",
+            fileType: FileType.document,
+            seq: 4,
+            status: true,
+          },
+          {
+            projectId,
+            code: "PAYMENT_PLAN",
+            title: "Payment Plan & Commercial Terms",
+            subtitle: "(Construction linked & flexible plans)",
+            icon: "💰",
+            fileType: FileType.document,
+            seq: 5,
+            status: true,
+          },
+          {
+            projectId,
+            code: "LOCATION_MAP",
+            title: "Location Map & Connectivity",
+            subtitle: "(Expressway & Metro proximity highlights)",
+            icon: "🗺️",
+            fileType: FileType.image,
+            seq: 6,
+            status: true,
+          },
+        ],
+      });
+    }
+  }
+
+  /**
+   * Configure specific collaterals active for a project.
+   * Only the specified codes will have status: true; all others will have status: false!
+   * e.g. activeCodes: ["FLOOR_PLAN", "GALLERY"]
+   */
+  public async configureProjectCollaterals(
+    projectId: string,
+    activeCodes: string[]
+  ): Promise<CollateralItem[]> {
+    await this.ensureProjectCollaterals(projectId);
+
+    const upperCodes = activeCodes.map((c) => c.toUpperCase());
+
+    // 1. Deactivate all collaterals for this project
+    await prisma.projectCollateral.updateMany({
+      where: { projectId },
+      data: { status: false },
+    });
+
+    // 2. Activate only the specified codes
+    await prisma.projectCollateral.updateMany({
+      where: {
+        projectId,
+        code: { in: upperCodes },
+      },
+      data: { status: true },
+    });
+
+    return prisma.projectCollateral.findMany({
+      where: { projectId },
+      orderBy: { seq: "asc" },
+    }) as any;
   }
 
   /**

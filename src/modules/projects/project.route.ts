@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { validate } from "../../middlewares/validate.js";
+import { upload } from "../../middlewares/upload.middleware.js";
 import * as projectCtrl from "./project.controller.js";
-import { createProjectSchema, updateProjectSchema, createGallerySchema } from "./project.schema.js";
+import { createProjectSchema, updateProjectSchema } from "./project.schema.js";
 
 const router = Router();
 
@@ -12,15 +13,15 @@ router.get("/:id", projectCtrl.getById);
 router.put("/:id", validate(updateProjectSchema), projectCtrl.update);
 router.delete("/:id", projectCtrl.destroy);
 
-// Documents setting & management
-router.post("/:id/documents", projectCtrl.setDocuments);
-router.put("/:id/set-document", projectCtrl.setDocuments);
-router.patch("/:id/documents", projectCtrl.setDocuments);
+// Documents setting & management (supports JSON or multipart file upload)
+router.post("/:id/documents", upload.single("file"), projectCtrl.setDocuments);
+router.put("/:id/set-document", upload.single("file"), projectCtrl.setDocuments);
+router.patch("/:id/documents", upload.single("file"), projectCtrl.setDocuments);
 
-// Gallery / Media collaterals
+// Gallery / Media collaterals (supports JSON or multipart file upload)
 router.get("/:projectId/gallery", projectCtrl.getGallery);
-router.post("/:projectId/gallery", validate(createGallerySchema), projectCtrl.addGalleryItem);
-router.put("/gallery/:id", projectCtrl.updateGalleryItem);
+router.post("/:projectId/gallery", upload.single("file"), projectCtrl.addGalleryItem);
+router.put("/gallery/:id", upload.single("file"), projectCtrl.updateGalleryItem);
 router.delete("/gallery/:id", projectCtrl.deleteGalleryItem);
 
 export { router as ProjectRoutes };

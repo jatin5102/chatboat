@@ -224,136 +224,87 @@ export class BotService {
 
     // When user says "hi" / greeting OR is at INITIAL step:
     if (isGreeting || session.step === ChatStep.INITIAL) {
-      if (session.name && session.firmName && session.reraNumber) {
-        await this.sendPlatterMenu(client, chatId, session.name);
+      if (session.channelPartnerId || (session.name && session.firmName && session.reraNumber)) {
+        await this.sendPlatterMenu(client, chatId, session.name || session.firmName || 'Partner');
       } else {
-        await this.sendInitialWelcome(client, chatId);
+        // Auto-check if incoming phone number matches an admin-registered channel partner
+        const cleanPhone = (session.phone || realPhone || '').replace(/\D/g, '').slice(-10);
+        const existingCp = cleanPhone.length >= 10 ? await channelPartnerService.findByPhone(cleanPhone) : null;
+        if (existingCp && existingCp.status) {
+          await sessionService.updateSession(chatId, {
+            channelPartnerId: existingCp.id,
+            name: existingCp.fullName,
+            firmName: existingCp.firmName,
+            reraNumber: existingCp.reraNumber,
+            step: ChatStep.SELECT_PLATTER,
+          });
+          await this.sendChannelPartnerVerified(
+            client,
+            chatId,
+            existingCp.fullName,
+            existingCp.firmName,
+            existingCp.reraNumber,
+            session.phone || realPhone
+          );
+        } else {
+          await this.sendChannelPartnerList(client, chatId);
+        }
       }
       return;
     }
 
     // State Machine
     switch (session.step) {
-      // Step 3: Capture Name -> Ask RERA
-      case ChatStep.AWAITING_NAME: {
-        const invalidName = greetingWords.includes(lowerText) || /^(ok|yes|no|test|bot)$/i.test(lowerText);
-        if (!rawText || rawText.length < 2 || invalidName) {
-          await this.reply(
-            client,
-            chatId,
-            `👋 Welcome! To access our verified M3M Noida marketing creatives, may I please know your *Full Name*?`,
-            session.step
+      // Step: Select registered Channel Partner (Admin only creates, user only chooses)
+      case ChatStep.CHOOSE_CHANNEL_PARTNER:
+      case ChatStep.AWAITING_NAME:
+      case ChatStep.AWAITING_RERA:
+      case ChatStep.AWAITING_FIRM_NAME: {
+        const partners = await channelPartnerService.getAll();
+        const activePartners = partners.filter((p) => p.status);
+        const choiceNum = parseInt(rawText.trim(), 10);
+
+        let selectedPartner: any = null;
+
+        if (!isNaN(choiceNum) && choiceNum >= 1 && choiceNum <= activePartners.length) {
+          selectedPartner = activePartners[choiceNum - 1];
+        } else {
+          const searchInput = rawText.trim().toUpperCase();
+          selectedPartner = activePartners.find(
+            (p) =>
+              p.reraNumber.toUpperCase() === searchInput ||
+              p.firmName.toUpperCase().includes(searchInput) ||
+              p.fullName.toUpperCase().includes(searchInput)
           );
-          return;
         }
 
-        await sessionService.updateSession(chatId, {
-          name: rawText,
-          step: ChatStep.AWAITING_RERA,
-        });
-
-        await this.reply(
-          client,
-          chatId,
-          `Thank you, *${rawText}*! 🤝\n\n` +
-          `4️⃣ Please enter your company's *RERA Registration Number*:\n` +
-          `*(e.g. UPRERAAGT10482, or type "APPLIED" if awaiting)*`,
-          ChatStep.AWAITING_RERA
-        );
-        break;
-      }
-
-      // Step 4: Capture RERA -> Check existing Partner or Ask Firm Name
-      case ChatStep.AWAITING_RERA: {
-        if (!rawText || rawText.length < 2) {
-          await this.reply(
-            client,
-            chatId,
-            `⚠️ Please enter a valid RERA registration number (or reply "APPLIED"):`,
-            session.step
-          );
-          return;
-        }
-
-        const reraInput = rawText.toUpperCase();
-
-        // Check if Channel Partner exists in DB with this RERA
-        const existingCp = await channelPartnerService.findByRera(reraInput);
-
-        if (existingCp) {
-          // Auto-fill firm name and link partner
+        if (selectedPartner) {
           await sessionService.updateSession(chatId, {
-            reraNumber: reraInput,
-            firmName: existingCp.firmName,
-            channelPartnerId: existingCp.id,
+            channelPartnerId: selectedPartner.id,
+            name: selectedPartner.fullName,
+            firmName: selectedPartner.firmName,
+            reraNumber: selectedPartner.reraNumber,
             step: ChatStep.SELECT_PLATTER,
           });
 
           await this.sendChannelPartnerVerified(
             client,
             chatId,
-            session.name || existingCp.fullName,
-            existingCp.firmName,
-            reraInput,
+            selectedPartner.fullName,
+            selectedPartner.firmName,
+            selectedPartner.reraNumber,
             session.phone || realPhone
           );
           return;
         }
 
-        // New RERA -> Ask Step 5: Firm Name
-        await sessionService.updateSession(chatId, {
-          reraNumber: reraInput,
-          step: ChatStep.AWAITING_FIRM_NAME,
-        });
-
         await this.reply(
           client,
           chatId,
-          `RERA Number recorded: *${reraInput}* ✅\n\n` +
-          `5️⃣ Please enter your *Company / Firm Name*:\n` +
-          `*(e.g. Apex Realty Advisory, PropAdvisor NCR)*`,
-          ChatStep.AWAITING_FIRM_NAME
-        );
-        break;
-      }
-
-      // Step 5: Capture Firm Name -> Register Partner & Show Platter List
-      case ChatStep.AWAITING_FIRM_NAME: {
-        if (!rawText || rawText.length < 2) {
-          await this.reply(
-            client,
-            chatId,
-            `⚠️ Please enter your company or firm name to proceed:`,
-            session.step
-          );
-          return;
-        }
-
-        const firmName = rawText.trim();
-        const partnerName = session.name || "Channel Partner";
-        const reraNumber = session.reraNumber || "UPRERA-VERIFIED";
-
-        // Save/upsert to Channel Partner registry in DB
-        const cp = await channelPartnerService.upsertFromBot({
-          fullName: partnerName,
-          firmName,
-          reraNumber,
-          mobileNo: session.phone || realPhone,
-        });
-
-        await sessionService.updateSession(chatId, {
-          firmName,
-          channelPartnerId: cp.id,
-          step: ChatStep.SELECT_PLATTER,
-        });
-
-        await this.sendChannelPartnerVerified(
-          client,
-          chatId,
-          partnerName,
-          firmName,
-          reraNumber,
-          session.phone || realPhone
+          `⚠️ *Channel Partner Profile Not Found!*\n\n` +
+          `❌ Channel Partners cannot be registered manually by users. Profiles are authorized and managed by *M3M Admin only*.\n\n` +
+          `👉 Please reply with a valid number from *1 to ${activePartners.length}* to select your firm from the list, or contact your M3M Relationship Manager to get registered.`,
+          ChatStep.CHOOSE_CHANNEL_PARTNER
         );
         break;
       }
@@ -378,9 +329,8 @@ export class BotService {
           await this.sendProjectsList(client, chatId, commPlatter ? commPlatter.id : undefined, '🏢 COMMERCIAL PROJECTS');
         } else if (rawText === '3' || lowerText.includes('faq')) {
           await this.sendFaqMenu(client, chatId);
-        } else if (rawText === '4' || lowerText.includes('update')) {
-          await sessionService.updateSession(chatId, { step: ChatStep.AWAITING_NAME });
-          await this.reply(client, chatId, `👉 Please enter your *Full Name* to update your profile:`, ChatStep.AWAITING_NAME);
+        } else if (rawText === '4' || lowerText.includes('partner') || lowerText.includes('change') || lowerText.includes('update')) {
+          await this.sendChannelPartnerList(client, chatId);
         } else {
           await this.reply(
             client,
@@ -690,18 +640,37 @@ export class BotService {
   }
 
   /**
-   * Step 2: Welcome to M3M Noida & explain personalized creatives, ask full name.
+   * Displays list of Admin-registered Channel Partners for user to select from.
+   * Users can ONLY choose from admin-registered partners, cannot manually create.
    */
+  public async sendChannelPartnerList(client: Client, to: string): Promise<void> {
+    await sessionService.updateSession(to, { step: ChatStep.CHOOSE_CHANNEL_PARTNER });
+
+    const partners = await channelPartnerService.getAll();
+    const activePartners = partners.filter((p) => p.status);
+
+    let text =
+      `👋 *WELCOME TO M3M NOIDA CHANNEL PARTNER PORTAL*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `Generate high-converting, personalized marketing collaterals (Brochures, 3D Architectural Creatives, Floor Plans & Specifications) branded with your company name and RERA details.\n\n` +
+      `🏢 *Please select your registered Channel Partner profile:*\n\n`;
+
+    activePartners.forEach((cp, idx) => {
+      const emoji = this.getNumberEmoji(idx);
+      text += `${emoji} *${cp.firmName}*\n`;
+      text += `   👤 ${cp.fullName} | 📜 RERA: *${cp.reraNumber}*\n\n`;
+    });
+
+    text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `👉 *Reply with a number (1 - ${activePartners.length}) to select your firm.*\n`;
+    text += `*(Or reply with your firm's UP RERA Registration Number)*\n\n`;
+    text += `ℹ️ *Note:* Channel Partner registrations are managed by M3M Admin only. To register your firm, please contact M3M Partner Desk at partners@m3m.com.`;
+
+    await this.reply(client, to, text, ChatStep.CHOOSE_CHANNEL_PARTNER);
+  }
+
   public async sendInitialWelcome(client: Client, to: string): Promise<void> {
-    await sessionService.updateSession(to, { step: ChatStep.AWAITING_NAME });
-
-    const welcomeMsg =
-      `👋 *Welcome to Northwind Chatbot.` +
-        `2️⃣ We provide instant, personalized marketing collaterals (Brochures, High-Res 3D Creatives, Floor Plans & Specifications) customized with your *Name*, *Firm Name*, and *RERA Registration Number* to share directly with your prospective buyers.\n\n` +
-        `To generate your personalized marketing creatives, let's get started!\n\n` +
-      `3️⃣ 👉 Please enter your *Full Name*:`;
-
-    await this.reply(client, to, welcomeMsg, ChatStep.AWAITING_NAME);
+    await this.sendChannelPartnerList(client, to);
   }
 
   /**

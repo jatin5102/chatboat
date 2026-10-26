@@ -3,6 +3,7 @@ import asyncHandler from "express-async-handler";
 import * as projectService from "./project.service.js";
 import { successResponse } from "../../utils/responseHandler.utils.js";
 import { ApiError } from "../../utils/apiError.utils.js";
+import { formatUploadedFile } from "../../middlewares/upload.middleware.js";
 
 export const getList = asyncHandler(async (req: Request, res: Response) => {
   const platterId = req.query.platterId as string | undefined;
@@ -44,13 +45,26 @@ export const getGallery = asyncHandler(async (req: Request, res: Response) => {
 
 export const addGalleryItem = asyncHandler(async (req: Request, res: Response) => {
   const projectId = String(req.params.projectId);
-  const record = await projectService.addGalleryItem(projectId, req.body);
+  const data = { ...req.body };
+  if (req.file) {
+    const uploaded = formatUploadedFile(req.file);
+    data.link = uploaded.path;
+    if (!data.fileType) data.fileType = uploaded.fileType;
+    if (!data.title) data.title = req.file.originalname;
+  }
+  const record = await projectService.addGalleryItem(projectId, data);
   successResponse(res, 201, "Gallery item added successfully!", record);
 });
 
 export const updateGalleryItem = asyncHandler(async (req: Request, res: Response) => {
   const id = String(req.params.id);
-  const record = await projectService.updateGalleryItem(id, req.body);
+  const data = { ...req.body };
+  if (req.file) {
+    const uploaded = formatUploadedFile(req.file);
+    data.link = uploaded.path;
+    if (!data.fileType) data.fileType = uploaded.fileType;
+  }
+  const record = await projectService.updateGalleryItem(id, data);
   successResponse(res, 200, "Gallery item updated successfully!", record);
 });
 
@@ -62,6 +76,12 @@ export const deleteGalleryItem = asyncHandler(async (req: Request, res: Response
 
 export const setDocuments = asyncHandler(async (req: Request, res: Response) => {
   const projectId = String(req.params.id);
-  const record = await projectService.setDocuments(projectId, req.body);
+  const data = { ...req.body };
+  if (req.file) {
+    const uploaded = formatUploadedFile(req.file);
+    data.brochure = uploaded.path;
+    data.hasDocuments = true;
+  }
+  const record = await projectService.setDocuments(projectId, data);
   successResponse(res, 200, "Project documents updated successfully!", record);
 });
