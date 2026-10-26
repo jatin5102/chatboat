@@ -3,9 +3,13 @@ const { MessageMedia } = pkg;
 import type { Client, Message } from 'whatsapp-web.js';
 import { sessionService } from './session.service.js';
 import { watermarkService } from './watermark.service.js';
-import { PROPERTIES, getPropertyById } from '../config/properties.js';
+import { projectService, BotProject } from './project.service.js';
+import { platterService } from './platter.service.js';
+import { channelPartnerService } from './channelPartner.service.js';
+import { faqService } from './faq.service.js';
+import { collateralService, CollateralItem } from './collateral.service.js';
+import { chatRecordService } from './chatRecord.service.js';
 import { ChatStep } from '../types/index.js';
-import path from 'node:path';
 
 function formatPhone(phone: string): string {
   if (!phone) return '';
@@ -30,8 +34,6 @@ function formatPhone(phone: string): string {
 
 /**
  * Resolves the user's actual phone number.
- * Modern WhatsApp Web uses internal @lid identifiers for linked devices and privacy.
- * This resolver converts @lid -> actual phone number (PN).
  */
 export async function resolveRealPhoneNumber(
   client: Client,
@@ -54,7 +56,6 @@ export async function resolveRealPhoneNumber(
       if (Array.isArray(res) && res.length > 0 && res[0]?.pn) {
         const pnDigits = res[0].pn.replace(/@.*$/, '').replace(/\D/g, '');
         if (pnDigits.length >= 10 && pnDigits.length <= 13) {
-          console.log(`[Phone Resolver] Successfully mapped LID ${from} -> Real Phone: ${pnDigits}`);
           return pnDigits;
         }
       }
@@ -109,383 +110,855 @@ export async function resolveRealPhoneNumber(
 }
 
 export class BotService {
+  private readyTimestamp: number = Math.floor(Date.now() / 1000);
+
+  public setReadyTimestamp(ts: number = Math.floor(Date.now() / 1000)): void {
+    this.readyTimestamp = ts;
+  }
+
+  /**
+   * Helper to send an outgoing WhatsApp message and log it in the database.
+   */
+  public async reply(
+    client: Client,
+    to: string,
+    text: string,
+    step: string
+  ): Promise<void> {
+    try {
+      await client.sendMessage(to, text);
+      await chatRecordService.recordOutgoingMessage(to, text, step, 'text');
+    } catch (err: any) {
+      console.error(`[Bot] Error sending message to ${to}:`, err.message);
+      if (to.endsWith('@lid')) {
+        const digits = to.replace(/\D/g, '');
+        if (digits.length >= 10 && digits.length <= 13) {
+          try {
+            await client.sendMessage(`${digits}@c.us`, text);
+            await chatRecordService.recordOutgoingMessage(`${digits}@c.us`, text, step, 'text');
+            return;
+          } catch {}
+        }
+      }
+      throw err;
+    }
+  }
+
   public async handleMessage(client: Client, message: Message): Promise<void> {
-    // Ignore group messages, status updates, or broadcast messages
-    if (message.from.endsWith('@g.us') || message.isStatus || message.from === 'status@broadcast') {
+    // 1. Ignore messages sent by own WhatsApp account
+    if (message.fromMe) {
+      return;
+    }
+
+    // 2. Ignore group messages, status updates, or broadcast messages
+    if (
+      message.from.endsWith('@g.us') ||
+      message.isStatus ||
+      message.from === 'status@broadcast' ||
+      (message as any).broadcast
+    ) {
+      return;
+    }
+
+    // 3. Ignore system / non-chat event messages (e2e notices, reactions, calls)
+    if (['e2e_notification', 'notification_template', 'call_log', 'reaction', 'gp2'].includes(message.type)) {
+      return;
+    }
+
+    // 4. Ignore old historical backlog messages (older than 2 minutes / 120s from offline sync)
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (message.timestamp && (nowSec - message.timestamp > 120)) {
+      console.log(
+        `[Bot] Ignored old message from ${message.from} (sent ${nowSec - message.timestamp}s ago)`
+      );
       return;
     }
 
     const rawText = (message.body || '').trim();
     const chatId = message.from;
     const realPhone = await resolveRealPhoneNumber(client, message);
-    const session = sessionService.getSession(chatId, realPhone);
+    const session = await sessionService.getSession(chatId, realPhone);
 
     if (realPhone && (!session.phone || session.phone.length > 13 || session.phone !== realPhone)) {
-      sessionService.updateSession(chatId, { phone: realPhone });
+      await sessionService.updateSession(chatId, { phone: realPhone });
     }
+
+    // Persist incoming message to DB
+    await chatRecordService.recordIncomingMessage(chatId, rawText, session.step);
 
     const lowerText = rawText.toLowerCase();
 
     // Global reset keywords
     if (['restart', 'reset'].includes(lowerText)) {
-      sessionService.resetSession(chatId, realPhone);
-      await this.sendWelcomeAndAskName(client, message.from);
+      await sessionService.resetSession(chatId, realPhone);
+      await this.sendInitialWelcome(client, chatId);
       return;
     }
 
-    // Main conversation step machine
+    // Direct FAQ trigger anytime
+    if (lowerText === 'faq' || lowerText === 'faqs' || lowerText === 'help') {
+      await this.sendFaqMenu(client, chatId);
+      return;
+    }
+
+    // Main Menu trigger anytime
+    if (lowerText === 'menu' || lowerText === 'main menu' || lowerText === 'start') {
+      if (session.name && session.firmName) {
+        await this.sendPlatterMenu(client, chatId, session.name);
+        return;
+      }
+      await this.sendInitialWelcome(client, chatId);
+      return;
+    }
+
+    // Common greeting words
+    const greetingWords = [
+      'hi', 'hello', 'hey', 'namaste', 'hola', 'good morning', 'good afternoon', 'good evening', 'info', 'start'
+    ];
+    const isGreeting =
+      greetingWords.includes(lowerText) ||
+      lowerText === 'hi' ||
+      lowerText.startsWith('hi ') ||
+      lowerText.startsWith('hello ') ||
+      lowerText.startsWith('hey ');
+
+    // When user says "hi" / greeting OR is at INITIAL step:
+    if (isGreeting || session.step === ChatStep.INITIAL) {
+      if (session.name && session.firmName && session.reraNumber) {
+        await this.sendPlatterMenu(client, chatId, session.name);
+      } else {
+        await this.sendInitialWelcome(client, chatId);
+      }
+      return;
+    }
+
+    // State Machine
     switch (session.step) {
-      case ChatStep.INITIAL: {
-        await this.sendWelcomeAndAskName(client, message.from);
-        break;
-      }
-
+      // Step 3: Capture Name -> Ask RERA
       case ChatStep.AWAITING_NAME: {
-        if (!rawText || rawText.length < 2) {
-          await client.sendMessage(
-            message.from,
-            '⚠️ Please enter a valid full name to proceed.'
+        const invalidName = greetingWords.includes(lowerText) || /^(ok|yes|no|test|bot)$/i.test(lowerText);
+        if (!rawText || rawText.length < 2 || invalidName) {
+          await this.reply(
+            client,
+            chatId,
+            `👋 Welcome! To access our verified M3M Noida marketing creatives, may I please know your *Full Name*?`,
+            session.step
           );
           return;
         }
 
-        sessionService.updateSession(chatId, {
+        await sessionService.updateSession(chatId, {
           name: rawText,
-          step: ChatStep.AWAITING_LOCATION
+          step: ChatStep.AWAITING_RERA,
         });
 
-        const displayPhone = formatPhone(session.phone || realPhone);
-        await client.sendMessage(
-          message.from,
-          `Nice to connect with you, *${rawText}*! 😊\n` +
-          `📱 Registered WhatsApp: *${displayPhone}*\n\n` +
-          `Which *City or Locality* are you currently exploring properties in?\n*(e.g. Gurgaon, Bangalore, Mumbai, Pune, Noida)*`
-        );
-        break;
-      }
-
-      case ChatStep.AWAITING_LOCATION: {
-        if (!rawText || rawText.length < 2) {
-          await client.sendMessage(
-            message.from,
-            '⚠️ Please enter your preferred city or location.'
-          );
-          return;
-        }
-
-        sessionService.updateSession(chatId, {
-          location: rawText,
-          step: ChatStep.AWAITING_ROLE
-        });
-
-        await client.sendMessage(
-          message.from,
-          `Got it! Location recorded: *${rawText}* 📍\n\nCould you please let us know your profile?\n\n1️⃣ I am a *Home Buyer / Property Investor*\n2️⃣ I am a *Channel Partner / Real Estate Broker*\n\n👉 *Reply with 1 or 2*`
-        );
-        break;
-      }
-
-      case ChatStep.AWAITING_ROLE: {
-        if (rawText === '1') {
-          sessionService.updateSession(chatId, {
-            role: 'BUYER',
-            step: ChatStep.AWAITING_PROPERTY_SELECTION
-          });
-          await client.sendMessage(
-            message.from,
-            `Thank you! We have matched premier residential projects suited for home buyers. 🏡`
-          );
-          await this.sendPropertyList(client, message.from);
-        } else if (rawText === '2') {
-          sessionService.updateSession(chatId, {
-            role: 'CHANNEL_PARTNER',
-            step: ChatStep.AWAITING_RERA
-          });
-          await client.sendMessage(
-            message.from,
-            `Welcome, Partner! 🤝\nPlease enter your *RERA Registration Number* or *Agency Name* for our broker desk records:`
-          );
-        } else {
-          await client.sendMessage(
-            message.from,
-            '⚠️ Invalid option. Please reply with *1* for Home Buyer or *2* for Channel Partner.'
-          );
-        }
-        break;
-      }
-
-      case ChatStep.AWAITING_RERA: {
-        if (!rawText || rawText.length < 3) {
-          await client.sendMessage(
-            message.from,
-            '⚠️ Please enter your valid RERA number or Agency name.'
-          );
-          return;
-        }
-
-        sessionService.updateSession(chatId, {
-          reraNumber: rawText,
-          step: ChatStep.AWAITING_PROPERTY_SELECTION
-        });
-
-        await client.sendMessage(
-          message.from,
-          `Thank you! Partner verified: *${rawText}* ✅\nAccessing exclusive partner collateral & project inventory...`
-        );
-        await this.sendPropertyList(client, message.from);
-        break;
-      }
-
-      case ChatStep.AWAITING_PROPERTY_SELECTION: {
-        const choice = parseInt(rawText, 10);
-        if (isNaN(choice) || choice < 1 || choice > PROPERTIES.length) {
-          await client.sendMessage(
-            message.from,
-            `⚠️ Invalid selection. Please reply with a number between 1 and ${PROPERTIES.length}.`
-          );
-          await this.sendPropertyList(client, message.from);
-          return;
-        }
-
-        const selectedProp = PROPERTIES[choice - 1];
-        sessionService.updateSession(chatId, {
-          selectedPropertyId: selectedProp.id,
-          step: ChatStep.PROPERTY_MENU
-        });
-
-        await this.sendPropertyMenu(client, message.from, selectedProp);
-        break;
-      }
-
-      case ChatStep.PROPERTY_MENU: {
-        const currentProp = getPropertyById(session.selectedPropertyId || '');
-        if (!currentProp) {
-          sessionService.updateSession(chatId, {
-            step: ChatStep.AWAITING_PROPERTY_SELECTION
-          });
-          await this.sendPropertyList(client, message.from);
-          return;
-        }
-
-        await this.handlePropertyMenuChoice(
+        await this.reply(
           client,
-          message.from,
-          rawText,
-          currentProp,
-          session.name || 'Client',
+          chatId,
+          `Thank you, *${rawText}*! 🤝\n\n` +
+          `4️⃣ Please enter your company's *RERA Registration Number*:\n` +
+          `*(e.g. UPRERAAGT10482, or type "APPLIED" if awaiting)*`,
+          ChatStep.AWAITING_RERA
+        );
+        break;
+      }
+
+      // Step 4: Capture RERA -> Check existing Partner or Ask Firm Name
+      case ChatStep.AWAITING_RERA: {
+        if (!rawText || rawText.length < 2) {
+          await this.reply(
+            client,
+            chatId,
+            `⚠️ Please enter a valid RERA registration number (or reply "APPLIED"):`,
+            session.step
+          );
+          return;
+        }
+
+        const reraInput = rawText.toUpperCase();
+
+        // Check if Channel Partner exists in DB with this RERA
+        const existingCp = await channelPartnerService.findByRera(reraInput);
+
+        if (existingCp) {
+          // Auto-fill firm name and link partner
+          await sessionService.updateSession(chatId, {
+            reraNumber: reraInput,
+            firmName: existingCp.firmName,
+            channelPartnerId: existingCp.id,
+            step: ChatStep.SELECT_PLATTER,
+          });
+
+          await this.sendChannelPartnerVerified(
+            client,
+            chatId,
+            session.name || existingCp.fullName,
+            existingCp.firmName,
+            reraInput,
+            session.phone || realPhone
+          );
+          return;
+        }
+
+        // New RERA -> Ask Step 5: Firm Name
+        await sessionService.updateSession(chatId, {
+          reraNumber: reraInput,
+          step: ChatStep.AWAITING_FIRM_NAME,
+        });
+
+        await this.reply(
+          client,
+          chatId,
+          `RERA Number recorded: *${reraInput}* ✅\n\n` +
+          `5️⃣ Please enter your *Company / Firm Name*:\n` +
+          `*(e.g. Apex Realty Advisory, PropAdvisor NCR)*`,
+          ChatStep.AWAITING_FIRM_NAME
+        );
+        break;
+      }
+
+      // Step 5: Capture Firm Name -> Register Partner & Show Platter List
+      case ChatStep.AWAITING_FIRM_NAME: {
+        if (!rawText || rawText.length < 2) {
+          await this.reply(
+            client,
+            chatId,
+            `⚠️ Please enter your company or firm name to proceed:`,
+            session.step
+          );
+          return;
+        }
+
+        const firmName = rawText.trim();
+        const partnerName = session.name || "Channel Partner";
+        const reraNumber = session.reraNumber || "UPRERA-VERIFIED";
+
+        // Save/upsert to Channel Partner registry in DB
+        const cp = await channelPartnerService.upsertFromBot({
+          fullName: partnerName,
+          firmName,
+          reraNumber,
+          mobileNo: session.phone || realPhone,
+        });
+
+        await sessionService.updateSession(chatId, {
+          firmName,
+          channelPartnerId: cp.id,
+          step: ChatStep.SELECT_PLATTER,
+        });
+
+        await this.sendChannelPartnerVerified(
+          client,
+          chatId,
+          partnerName,
+          firmName,
+          reraNumber,
           session.phone || realPhone
         );
         break;
       }
 
-      default: {
-        await this.sendWelcomeAndAskName(client, message.from);
+      // Step 1 / Platter Selection (Residential vs Commerci`al)
+      case ChatStep.SELECT_PLATTER: {
+        if (rawText === '1' || lowerText.includes('residential')) {
+          const platters = await platterService.getAllPlatters();
+          const resPlatter = platters.find((p) => p.slug.includes('residential')) || platters[0];
+          await sessionService.updateSession(chatId, {
+            selectedPlatterId: resPlatter ? resPlatter.id : undefined,
+            step: ChatStep.SELECT_PROJECT,
+          });
+          await this.sendProjectsList(client, chatId, resPlatter ? resPlatter.id : undefined, '🏡 RESIDENTIAL PROJECTS');
+        } else if (rawText === '2' || lowerText.includes('commercial')) {
+          const platters = await platterService.getAllPlatters();
+          const commPlatter = platters.find((p) => p.slug.includes('commercial')) || platters[1] || platters[0];
+          await sessionService.updateSession(chatId, {
+            selectedPlatterId: commPlatter ? commPlatter.id : undefined,
+            step: ChatStep.SELECT_PROJECT,
+          });
+          await this.sendProjectsList(client, chatId, commPlatter ? commPlatter.id : undefined, '🏢 COMMERCIAL PROJECTS');
+        } else if (rawText === '3' || lowerText.includes('faq')) {
+          await this.sendFaqMenu(client, chatId);
+        } else if (rawText === '4' || lowerText.includes('update')) {
+          await sessionService.updateSession(chatId, { step: ChatStep.AWAITING_NAME });
+          await this.reply(client, chatId, `👉 Please enter your *Full Name* to update your profile:`, ChatStep.AWAITING_NAME);
+        } else {
+          await this.reply(
+            client,
+            chatId,
+            `⚠️ Please reply with a valid option:\n` +
+            `1️⃣ *Residential Projects*\n` +
+            `2️⃣ *Commercial Projects*\n` +
+            `3️⃣ *FAQs & Help Desk*`,
+            session.step
+          );
+        }
         break;
       }
-    }
-  }
 
-  private async sendWelcomeAndAskName(client: Client, to: string): Promise<void> {
-    sessionService.updateSession(to, { step: ChatStep.AWAITING_NAME });
+      // Step 7: Project Selection from Platter
+      case ChatStep.SELECT_PROJECT: {
+        if (rawText === '0' || lowerText === 'back') {
+          await this.sendPlatterMenu(client, chatId, session.name || 'Partner');
+          return;
+        }
 
-    const welcomeMsg =
-      `👋 *Welcome to Apex Prime Realty Advisory!*\n\n` +
-      `We specialize in verified luxury properties with instant digital collaterals, verified brochures, and personalized pricing.\n\n` +
-      `To get started, may I please know your *Full Name*?`;
-
-    await client.sendMessage(to, welcomeMsg);
-  }
-
-  private async sendPropertyList(client: Client, to: string): Promise<void> {
-    let listText = `🏢 *FEATURED EXCLUSIVE DEVELOPMENTS*\n\n`;
-
-    PROPERTIES.forEach((prop, idx) => {
-      listText += `*${idx + 1}️⃣ ${prop.name}*\n`;
-      listText += `   📍 Location: ${prop.location}\n`;
-      listText += `   💰 Range: ${prop.priceRange}\n`;
-      listText += `   🌟 Highlights: ${prop.tagline}\n\n`;
-    });
-
-    listText += `👉 *Reply with 1 or 2 to view details & download media:*`;
-
-    await client.sendMessage(to, listText);
-  }
-
-  private async sendPropertyMenu(
-    client: Client,
-    to: string,
-    prop: (typeof PROPERTIES)[0]
-  ): Promise<void> {
-    const menuText =
-      `🏢 *${prop.name.toUpperCase()}*\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📍 *Location:* ${prop.location}\n` +
-      `💰 *Price Range:* ${prop.priceRange}\n` +
-      `📜 *RERA No:* ${prop.reraNumber}\n\n` +
-      `📝 *Overview:* ${prop.description}\n\n` +
-      `*What would you like to receive?*\n` +
-      `1️⃣ 📄 *Download Official Brochure* (Personalized PDF with your Name & Phone)\n` +
-      `2️⃣ 🖼️ *View Image Gallery* (Watermarked with your Name & Phone)\n` +
-      `3️⃣ 🌟 *Key Amenities & Specifications*\n` +
-      `4️⃣ 🔄 *Choose Another Property*\n` +
-      `5️⃣ 🔁 *Start Over / Update Profile*\n` +
-      `6️⃣ 📞 *Request a Callback from Relationship Manager*\n\n` +
-      `👉 *Reply with a number (1 - 6):*`;
-
-    await client.sendMessage(to, menuText);
-  }
-
-  private async handlePropertyMenuChoice(
-    client: Client,
-    to: string,
-    choice: string,
-    prop: (typeof PROPERTIES)[0],
-    userName: string,
-    userPhone: string
-  ): Promise<void> {
-    const formattedPhone = formatPhone(userPhone);
-
-    switch (choice) {
-      case '1': {
-        // PDF Brochure with dynamic watermark
-        await client.sendMessage(
-          to,
-          `⏳ *Generating your personalized brochure for ${userName} (${formattedPhone})...*`
-        );
-
-        try {
-          const watermarkedPdfBuffer = await watermarkService.watermarkPdf(
-            prop.brochurePath,
-            userName,
-            formattedPhone
+        const projects = await projectService.getAllProjects(session.selectedPlatterId || undefined);
+        const choice = parseInt(rawText, 10);
+        if (isNaN(choice) || choice < 1 || choice > projects.length) {
+          await this.reply(
+            client,
+            chatId,
+            `⚠️ Invalid selection. Please reply with a number between *1 and ${projects.length}* (or *0* to return to Platters):`,
+            session.step
           );
+          return;
+        }
 
-          const pdfFileName = `${prop.name.replace(/[^a-zA-Z0-9]/g, '_')}_Brochure.pdf`;
-          const media = new MessageMedia(
-            'application/pdf',
-            watermarkedPdfBuffer.toString('base64'),
-            pdfFileName
+        const selectedProp = projects[choice - 1];
+        await sessionService.updateSession(chatId, {
+          selectedPropertyId: selectedProp.id,
+          step: ChatStep.SELECT_COLLATERAL,
+        });
+
+        await this.sendCollateralMenu(client, chatId, selectedProp);
+        break;
+      }
+
+      // Step 8: Deliver Selected Asset / Creative
+      case ChatStep.SELECT_COLLATERAL: {
+        const currentProp = await projectService.getProjectById(session.selectedPropertyId || '');
+        if (!currentProp) {
+          await this.sendPlatterMenu(client, chatId, session.name || 'Partner');
+          return;
+        }
+
+        const activeCollaterals = await collateralService.getActiveCollateralsForProject(currentProp.id);
+        const optChooseProj = activeCollaterals.length + 1;
+        const optMainMenu = activeCollaterals.length + 2;
+        const optFaqs = activeCollaterals.length + 3;
+        const totalOptions = optFaqs;
+
+        const choiceNum = parseInt(rawText.trim(), 10);
+
+        if (isNaN(choiceNum) || choiceNum < 1 || choiceNum > totalOptions) {
+          await this.reply(
+            client,
+            chatId,
+            `⚠️ Please reply with a valid number from 1 to ${totalOptions} to choose your collateral.`,
+            session.step
           );
+          await this.sendCollateralMenu(client, chatId, currentProp);
+          break;
+        }
 
-          const pdfCaption =
-            `📄 *Official Brochure: ${prop.name}*\n` +
-            `👤 Exclusively personalized for: *${userName}*\n` +
-            `📞 Phone: *${formattedPhone}*\n\n` +
-            `Reply *menu* anytime to view other options.`;
+        // Navigation 1: Choose another project
+        if (choiceNum === optChooseProj) {
+          await sessionService.updateSession(chatId, { step: ChatStep.SELECT_PROJECT });
+          await this.sendProjectsList(client, chatId, session.selectedPlatterId || undefined, 'DEVELOPMENTS');
+          break;
+        }
+
+        // Navigation 2: Return to main menu (Platters)
+        if (choiceNum === optMainMenu) {
+          await this.sendPlatterMenu(client, chatId, session.name || 'Partner');
+          break;
+        }
+
+        // Navigation 3: FAQs for this project
+        if (choiceNum === optFaqs) {
+          await this.sendFaqMenu(client, chatId);
+          break;
+        }
+
+        // Selected active collateral from database
+        const selectedCollateral = activeCollaterals[choiceNum - 1];
+        const code = (selectedCollateral.code || '').toUpperCase();
+
+        if (code === 'BROCHURE') {
+          // Deliver Personalized PDF Brochure
+          await this.reply(
+            client,
+            chatId,
+            `⏳ *Generating official personalized PDF brochure for ${session.name || 'Partner'} (${session.firmName || 'Channel Partner'})...*`,
+            ChatStep.SELECT_COLLATERAL
+          );
 
           try {
-            await client.sendMessage(to, media, {
-              caption: pdfCaption,
-              sendMediaAsDocument: true
-            });
-          } catch (captionErr) {
-            console.warn('Retrying PDF send as document without caption:', captionErr);
-            await client.sendMessage(to, media, { sendMediaAsDocument: true });
-            await client.sendMessage(to, pdfCaption);
-          }
-        } catch (err: any) {
-          console.error('Error sending watermarked PDF:', err);
-          await client.sendMessage(
-            to,
-            `⚠️ Could not generate personalized PDF: ${err.message}`
-          );
-        }
-        break;
-      }
-
-      case '2': {
-        // Images with dynamic watermark overlay
-        await client.sendMessage(
-          to,
-          `⏳ *Personalizing and stamping ${prop.imagePaths.length} high-res gallery images with your details...*`
-        );
-
-        try {
-          for (let i = 0; i < prop.imagePaths.length; i++) {
-            const imgPath = prop.imagePaths[i];
-            const watermarkedImgBuffer = await watermarkService.watermarkImage(
-              imgPath,
-              userName,
-              formattedPhone
-            );
-
-            const imgBaseName = path.basename(imgPath);
-            const media = new MessageMedia(
-              'image/jpeg',
-              watermarkedImgBuffer.toString('base64'),
-              imgBaseName
-            );
-
-            const imgCaption =
-              `🖼️ *${prop.name}* (Photo ${i + 1}/${prop.imagePaths.length})\n` +
-              `👤 Watermarked for: *${userName}* | 📞 *${formattedPhone}*`;
-
-            try {
-              await client.sendMessage(to, media, { caption: imgCaption });
-            } catch (imgErr) {
-              console.warn('Retrying image send without caption:', imgErr);
-              await client.sendMessage(to, media);
-              await client.sendMessage(to, imgCaption);
+            if (!currentProp.brochurePath) {
+              await this.reply(
+                client,
+                chatId,
+                `⚠️ Brochure document for ${currentProp.name} is currently being updated. Please choose another collateral.`,
+                ChatStep.SELECT_COLLATERAL
+              );
+              return;
             }
-          }
 
-          await client.sendMessage(
-            to,
-            `✅ All personalized gallery images have been sent.\nReply *menu* to open the property options again.`
+            const watermarkedPdf = await watermarkService.watermarkPdf(
+              currentProp.brochurePath,
+              session.name || 'Channel Partner',
+              formatPhone(session.phone || realPhone),
+              session.firmName || '',
+              session.reraNumber || ''
+            );
+
+            const fileName = `${currentProp.name.replace(/[^a-zA-Z0-9]/g, '_')}_Brochure.pdf`;
+            const media = new MessageMedia(
+              'application/pdf',
+              watermarkedPdf.toString('base64'),
+              fileName
+            );
+
+            const pdfCaption =
+              `📄 *Official Project Brochure: ${currentProp.name}*\n` +
+              `👤 Partner: *${session.name || 'Channel Partner'}*\n` +
+              `🏢 Firm: *${session.firmName || 'Realty Advisor'}*\n` +
+              `📜 RERA: *${session.reraNumber || 'Verified'}*\n` +
+              `📱 Mobile: *${formatPhone(session.phone || realPhone)}*`;
+
+            await client.sendMessage(chatId, media, { sendMediaAsDocument: true });
+            await client.sendMessage(chatId, pdfCaption);
+            await chatRecordService.recordOutgoingMessage(chatId, pdfCaption, ChatStep.SELECT_COLLATERAL, 'pdf');
+
+            await this.sendConfirmationOptions(client, chatId, currentProp.name);
+          } catch (err: any) {
+            console.error('Error generating watermarked PDF:', err);
+            await this.reply(client, chatId, `⚠️ Error creating brochure: ${err.message}`, ChatStep.SELECT_COLLATERAL);
+          }
+        } else if (code === 'GALLERY' || code === 'IMAGES') {
+          // Deliver High-Res 3D Creatives & Gallery (Watermarked)
+          await this.reply(
+            client,
+            chatId,
+            `⏳ *Rendering watermarked architectural creatives with your firm branding...*`,
+            ChatStep.SELECT_COLLATERAL
           );
-        } catch (err: any) {
-          console.error('Error sending watermarked images:', err);
-          await client.sendMessage(
-            to,
-            `⚠️ Error processing images: ${err.message}`
+
+          try {
+            const images = currentProp.imagePaths;
+            if (!images || images.length === 0) {
+              await this.reply(
+                client,
+                chatId,
+                `⚠️ Images for ${currentProp.name} are currently being updated in our media desk.`,
+                ChatStep.SELECT_COLLATERAL
+              );
+              return;
+            }
+
+            for (let i = 0; i < Math.min(images.length, 3); i++) {
+              const imgPath = images[i];
+              const watermarkedImg = await watermarkService.watermarkImage(
+                imgPath,
+                session.name || 'Channel Partner',
+                formatPhone(session.phone || realPhone),
+                session.firmName || '',
+                session.reraNumber || ''
+              );
+
+              const media = new MessageMedia(
+                'image/jpeg',
+                watermarkedImg.toString('base64'),
+                `Creative_${i + 1}.jpg`
+              );
+
+              const imgCaption =
+                `🖼️ *${currentProp.name} - Official Creative ${i + 1}*\n` +
+                `👤 Partner: *${session.name}* | *${session.firmName || 'M3M Partner'}*\n` +
+                `📜 RERA: *${session.reraNumber || 'Verified'}*`;
+
+              await client.sendMessage(chatId, media, { caption: imgCaption });
+              await chatRecordService.recordOutgoingMessage(chatId, imgCaption, ChatStep.SELECT_COLLATERAL, 'image');
+            }
+
+            await this.sendConfirmationOptions(client, chatId, currentProp.name);
+          } catch (err: any) {
+            console.error('Error watermarking image:', err);
+            await this.reply(client, chatId, `⚠️ Error creating creatives: ${err.message}`, ChatStep.SELECT_COLLATERAL);
+          }
+        } else if (code === 'FACTSHEET') {
+          // Deliver Factsheet & Specifications
+          const factsheet =
+            `📑 *PROJECT FACTSHEET: ${currentProp.name.toUpperCase()}*\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `📍 *Location:* ${currentProp.location}\n` +
+            `💰 *Price Range:* ${currentProp.priceRange}\n` +
+            `📜 *RERA Reg No:* ${currentProp.reraNumber}\n\n` +
+            `📝 *Project Overview:*\n${currentProp.description}\n\n` +
+            `🌟 *Key Amenities & Highlights:*\n` +
+            currentProp.amenities.map((a) => `• ${a}`).join('\n') +
+            `\n\n💼 *Personalized for:* ${session.name} (${session.firmName || 'Partner'})\n` +
+            `📞 *Mobile:* ${formatPhone(session.phone || realPhone)}`;
+
+          await this.reply(client, chatId, factsheet, ChatStep.SELECT_COLLATERAL);
+          await this.sendConfirmationOptions(client, chatId, currentProp.name);
+        } else {
+          // Deliver Custom Dynamic Collateral from database (Floor Plan, Payment Plan, Location Map, etc.)
+          await this.deliverCustomCollateral(
+            client,
+            chatId,
+            session,
+            currentProp,
+            selectedCollateral,
+            realPhone
           );
         }
         break;
       }
 
-      case '3': {
-        // Amenities list
-        let amenitiesMsg = `🌟 *AMENITIES & PROJECT FEATURES - ${prop.name}*\n\n`;
-        prop.amenities.forEach((amenity) => {
-          amenitiesMsg += `✔️ ${amenity}\n`;
-        });
-        amenitiesMsg += `\n📜 *RERA ID:* ${prop.reraNumber}\n\n`;
-        amenitiesMsg += `Reply with *1* for Brochure, *2* for Images, or *4* to view other properties.`;
+      // Step 9: Collateral Confirmation Options
+      case ChatStep.COLLATERAL_CONFIRMATION: {
+        const choice = rawText.trim();
+        const currentProp = await projectService.getProjectById(session.selectedPropertyId || '');
 
-        await client.sendMessage(to, amenitiesMsg);
+        if (choice === '1' && currentProp) {
+          // Browse more creatives for this project
+          await sessionService.updateSession(chatId, { step: ChatStep.SELECT_COLLATERAL });
+          await this.sendCollateralMenu(client, chatId, currentProp);
+        } else if (choice === '2') {
+          // Choose another project
+          await sessionService.updateSession(chatId, { step: ChatStep.SELECT_PROJECT });
+          await this.sendProjectsList(client, chatId, session.selectedPlatterId || undefined, 'DEVELOPMENTS');
+        } else if (choice === '3') {
+          // Return to main menu (Platters)
+          await this.sendPlatterMenu(client, chatId, session.name || 'Partner');
+        } else if (choice === '4') {
+          // View FAQs
+          await this.sendFaqMenu(client, chatId);
+        } else {
+          await this.reply(
+            client,
+            chatId,
+            `👉 Reply with *1* (More Creatives), *2* (Choose Project), *3* (Main Menu), or *4* (FAQs):`,
+            session.step
+          );
+        }
         break;
       }
 
-      case '4': {
-        sessionService.updateSession(to, {
-          step: ChatStep.AWAITING_PROPERTY_SELECTION,
-          selectedPropertyId: undefined
-        });
-        await this.sendPropertyList(client, to);
-        break;
-      }
+      // Dynamic FAQ Mode
+      case ChatStep.FAQ_MODE: {
+        if (rawText === '0' || lowerText === 'menu' || lowerText === 'back') {
+          await this.sendPlatterMenu(client, chatId, session.name || 'Partner');
+          return;
+        }
 
-      case '5': {
-        sessionService.resetSession(to, userPhone);
-        await this.sendWelcomeAndAskName(client, to);
-        break;
-      }
+        const faqs = await faqService.getFaqs();
+        const numChoice = parseInt(rawText, 10);
 
-      case '6': {
-        await client.sendMessage(
-          to,
-          `📞 *Callback Request Received!*\n\n` +
-          `Thank you *${userName}*! Our Senior Real Estate Specialist for *${prop.name}* has been alerted and will reach out to *${userPhone}* within 15 minutes.`
+        if (!isNaN(numChoice) && numChoice >= 1 && numChoice <= faqs.length) {
+          const selectedFaq = faqs[numChoice - 1];
+          const faqReply =
+            `📌 *Q: ${selectedFaq.question}*\n\n` +
+            `${selectedFaq.answer}\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `👉 *Reply with another FAQ number (1 - ${faqs.length}), type a question, or reply 0 to return to Main Menu:*`;
+
+          await this.reply(client, chatId, faqReply, ChatStep.FAQ_MODE);
+          return;
+        }
+
+        // Try natural language / keyword match
+        const match = await faqService.findBestMatch(rawText);
+        if (match) {
+          const faqReply =
+            `📌 *Q: ${match.question}*\n\n` +
+            `${match.answer}\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `👉 *Reply with an FAQ number, type another question, or reply 0 for Main Menu:*`;
+          await this.reply(client, chatId, faqReply, ChatStep.FAQ_MODE);
+          return;
+        }
+
+        // Default: display FAQ menu again
+        await this.reply(
+          client,
+          chatId,
+          `ℹ️ No exact answer found for "${rawText}". Here are the available FAQ topics:\n*(Or reply 0 to return to Main Menu)*`,
+          ChatStep.FAQ_MODE
         );
+        await this.sendFaqMenu(client, chatId);
         break;
       }
 
       default: {
-        // If user typed 'menu', show menu again
-        await this.sendPropertyMenu(client, to, prop);
+        await sessionService.resetSession(chatId, realPhone);
+        await this.sendInitialWelcome(client, chatId);
         break;
       }
     }
+  }
+
+  /**
+   * Step 2: Welcome to M3M Noida & explain personalized creatives, ask full name.
+   */
+  public async sendInitialWelcome(client: Client, to: string): Promise<void> {
+    await sessionService.updateSession(to, { step: ChatStep.AWAITING_NAME });
+
+    const welcomeMsg =
+      `👋 *Welcome to Northwind Chatbot.` +
+        `2️⃣ We provide instant, personalized marketing collaterals (Brochures, High-Res 3D Creatives, Floor Plans & Specifications) customized with your *Name*, *Firm Name*, and *RERA Registration Number* to share directly with your prospective buyers.\n\n` +
+        `To generate your personalized marketing creatives, let's get started!\n\n` +
+      `3️⃣ 👉 Please enter your *Full Name*:`;
+
+    await this.reply(client, to, welcomeMsg, ChatStep.AWAITING_NAME);
+  }
+
+  /**
+   * Step 6: Confirmation of Channel Partner Profile.
+   */
+  public async sendChannelPartnerVerified(
+    client: Client,
+    to: string,
+    partnerName: string,
+    firmName: string,
+    reraNo: string,
+    phone: string
+  ): Promise<void> {
+    const verifiedMsg =
+      `✅ *CHANNEL PARTNER PROFILE VERIFIED*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤 *Partner Name:* ${partnerName}\n` +
+      `🏢 *Firm Name:* ${firmName}\n` +
+      `📜 *RERA Reg No:* ${reraNo}\n` +
+      `📱 *WhatsApp:* ${formatPhone(phone)}\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `Your credentials will be dynamically embedded on all project collaterals & brochures.`;
+
+    await this.reply(client, to, verifiedMsg, ChatStep.SELECT_PLATTER);
+    await this.sendPlatterMenu(client, to, partnerName);
+  }
+
+  /**
+   * Step 1: Platter / Category Menu (Residential Projects vs Commercial Projects).
+   */
+  public async sendPlatterMenu(client: Client, to: string, partnerName: string): Promise<void> {
+    await sessionService.updateSession(to, { step: ChatStep.SELECT_PLATTER });
+
+    const menuMsg =
+      `Dear *${partnerName}*, Welcome to ${process.env.PROJECT_NAME} Chatbot.\n\n` +
+      `Please select a project category from the platter below:\n\n` +
+      `1️⃣ 🏡 *Residential Projects* (Ultra-Luxury Sky Mansions & Studio Suites)\n` +
+      `2️⃣ 🏢 *Commercial Projects* (High-Street Retail, Multiplex & Dining Promenades)\n` +
+      `👉 *Reply with 1 or 2:*`;
+
+    await this.reply(client, to, menuMsg, ChatStep.SELECT_PLATTER);
+  }
+
+  /**
+   * Displays list of projects under the selected Platter.
+   */
+  public async sendProjectsList(
+    client: Client,
+    to: string,
+    platterId?: string,
+    titleHeader: string = 'DEVELOPMENTS'
+  ): Promise<void> {
+    const projects = await projectService.getAllProjects(platterId);
+
+    if (projects.length === 0) {
+      await this.reply(
+        client,
+        to,
+        `⚠️ No active developments found in this category at the moment.\nReply *0* to return to Main Menu:`,
+        ChatStep.SELECT_PROJECT
+      );
+      return;
+    }
+
+    let listText = `🏢 *M3M NOIDA - ${titleHeader}*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+    projects.forEach((prop, idx) => {
+      listText += `*${idx + 1}️⃣ ${prop.name}*\n`;
+      listText += `   📍 *Location:* ${prop.location}\n`;
+      listText += `   💰 *Price:* ${prop.priceRange}\n`;
+      listText += `   🌟 *Tagline:* ${prop.tagline}\n`;
+      listText += `   📜 *RERA:* ${prop.reraNumber}\n\n`;
+    });
+
+    listText += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    listText += `👉 *Reply with a project number (1 - ${projects.length}) to select collaterals:*\n`;
+    listText += `*(Or reply 0 to return to Platters menu)*`;
+
+    await this.reply(client, to, listText, ChatStep.SELECT_PROJECT);
+  }
+
+  /**
+   * Delivers custom or extended marketing collaterals (e.g. Floor Plans, Payment Plan, Location Map, Custom Assets).
+   */
+  private async deliverCustomCollateral(
+    client: Client,
+    chatId: string,
+    session: any,
+    currentProp: BotProject,
+    collateral: CollateralItem,
+    realPhone: string
+  ): Promise<void> {
+    await this.reply(
+      client,
+      chatId,
+      `⏳ *Preparing ${collateral.title} for ${session.name || 'Partner'}...*`,
+      ChatStep.SELECT_COLLATERAL
+    );
+
+    try {
+      let detailText = collateral.content;
+      if (!detailText) {
+        if (collateral.code === 'FLOOR_PLAN') {
+          detailText =
+            `📐 *ARCHITECTURAL LAYOUT & FLOOR PLANS: ${currentProp.name.toUpperCase()}*\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🏢 *Project:* ${currentProp.name}\n` +
+            `📍 *Location:* ${currentProp.location}\n` +
+            `📜 *RERA Reg No:* ${currentProp.reraNumber}\n\n` +
+            `• *Configurations:* 3 BHK, 4 BHK & 5 BHK Sky Mansions\n` +
+            `• *Deck Space:* Wrap-around balconies with 360° open greens / skyline view\n` +
+            `• *Ceiling Height:* 11.5 ft clear ceiling heights\n` +
+            `• *Elevators:* High-speed private elevator access per apartment`;
+        } else if (collateral.code === 'PAYMENT_PLAN') {
+          detailText =
+            `💰 *OFFICIAL PAYMENT PLAN & COMMERCIAL TERMS: ${currentProp.name.toUpperCase()}*\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🏢 *Project:* ${currentProp.name}\n` +
+            `💰 *Starting Range:* ${currentProp.priceRange}\n\n` +
+            `1️⃣ *Construction Linked Plan (CLP):*\n` +
+            `• 10% on Booking\n` +
+            `• 15% within 45 Days\n` +
+            `• Balance linked to milestone slab completion\n\n` +
+            `2️⃣ *Flexi Possession-Linked (30:40:30):*\n` +
+            `• 30% Initial booking & agreement\n` +
+            `• 40% on Superstructure completion\n` +
+            `• 30% on Offer of Possession`;
+        } else if (collateral.code === 'LOCATION_MAP') {
+          detailText =
+            `🗺️ *STRATEGIC LOCATION & CONNECTIVITY: ${currentProp.name.toUpperCase()}*\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🏢 *Project:* ${currentProp.name}\n` +
+            `📍 *Address:* ${currentProp.location}\n\n` +
+            `🚗 *Road Proximity:*\n` +
+            `• 0-KM from South Delhi via Kalindi Kunj\n` +
+            `• Directly fronting Noida-Greater Noida Expressway\n` +
+            `• 15 mins to DND Flyway & Mahamaya Flyover\n\n` +
+            `🚇 *Metro Proximity:*\n` +
+            `• Walking distance to Magenta Line Metro Station\n` +
+            `• Seamless connectivity to IGI Airport & Cyber City`;
+        } else {
+          detailText =
+            `📑 *${collateral.title.toUpperCase()}*\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🏢 *Project:* ${currentProp.name}\n` +
+            `📍 *Location:* ${currentProp.location}\n` +
+            `📜 *RERA Reg No:* ${currentProp.reraNumber}\n\n` +
+            `${collateral.subtitle ? `${collateral.subtitle}\n\n` : ''}` +
+            `📝 *Project Overview:*\n${currentProp.description}`;
+        }
+      }
+
+      const messageContent =
+        `${detailText}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `💼 *Personalized for:* ${session.name || 'Channel Partner'} (${session.firmName || 'Realty Advisor'})\n` +
+        `📜 *RERA:* ${session.reraNumber || 'Verified'}\n` +
+        `📞 *Mobile:* ${formatPhone(session.phone || realPhone)}`;
+
+      await this.reply(client, chatId, messageContent, ChatStep.SELECT_COLLATERAL);
+      await this.sendConfirmationOptions(client, chatId, currentProp.name);
+    } catch (err: any) {
+      console.error('Error delivering custom collateral:', err);
+      await this.reply(client, chatId, `⚠️ Error preparing collateral: ${err.message}`, ChatStep.SELECT_COLLATERAL);
+    }
+  }
+
+  /**
+   * Helper to format index into emoji numbers: 1️⃣, 2️⃣, ..., 🔟
+   */
+  private getNumberEmoji(index: number): string {
+    const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+    return emojis[index] || `[${index + 1}]`;
+  }
+
+  /**
+   * Step 7: Dynamic Collaterals selection menu from database for selected project.
+   * Only displays collaterals where status === true (Active in database).
+   */
+  public async sendCollateralMenu(
+    client: Client,
+    to: string,
+    prop: BotProject
+  ): Promise<void> {
+    const activeCollaterals = await collateralService.getActiveCollateralsForProject(prop.id);
+
+    let collateralOptions = '';
+    activeCollaterals.forEach((item, index) => {
+      const emoji = this.getNumberEmoji(index);
+      const icon = item.icon || '📄';
+      const sub = item.subtitle ? ` ${item.subtitle}` : '';
+      collateralOptions += `${emoji} ${icon} *${item.title}*${sub}\n`;
+    });
+
+    const optChooseProj = activeCollaterals.length + 1;
+    const optMainMenu = activeCollaterals.length + 2;
+    const optFaqs = activeCollaterals.length + 3;
+    const totalOptions = optFaqs;
+
+    const navOptions =
+      `${this.getNumberEmoji(optChooseProj - 1)} 🔄 *Choose Another Project*\n` +
+      `${this.getNumberEmoji(optMainMenu - 1)} 🏠 *Return to Main Menu (Platters)*\n` +
+      `${this.getNumberEmoji(optFaqs - 1)} ❓ *FAQs for ${prop.name}*\n\n`;
+
+    const menuText =
+      `Please select your personalized marketing collaterals from the list below for *${prop.name}*:\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `📍 *Location:* ${prop.location} | 📜 *RERA:* ${prop.reraNumber}\n\n` +
+      collateralOptions +
+      navOptions +
+      `👉 *Reply with a number (1 - ${totalOptions}):*`;
+
+    await this.reply(client, to, menuText, ChatStep.SELECT_COLLATERAL);
+  }
+
+  /**
+   * Step 9: Post-delivery options confirmation.
+   */
+  public async sendConfirmationOptions(
+    client: Client,
+    to: string,
+    projectName: string
+  ): Promise<void> {
+    await sessionService.updateSession(to, { step: ChatStep.COLLATERAL_CONFIRMATION });
+
+    const confirmMsg =
+      `✅ *Selected Marketing Collateral Delivered Successfully!*\n\n` +
+      `👉 *What would you like to do next?*\n` +
+      `1️⃣ 🎨 *Browse more creatives for ${projectName}*\n` +
+      `2️⃣ 🏢 *Choose another project*\n` +
+      `3️⃣ 🏠 *Return to main menu (Platters)*\n` +
+      `4️⃣ ❓ *View FAQs*`;
+
+    await this.reply(client, to, confirmMsg, ChatStep.COLLATERAL_CONFIRMATION);
+  }
+
+  /**
+   * Dynamic FAQ Menu retrieved from database.
+   */
+  public async sendFaqMenu(client: Client, to: string): Promise<void> {
+    await sessionService.updateSession(to, { step: ChatStep.FAQ_MODE });
+
+    const faqs = await faqService.getFaqs();
+
+    let faqText = `❓ *M3M NOIDA - FREQUENTLY ASKED QUESTIONS (FAQ)*\n`;
+    faqText += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+    faqs.forEach((faq, idx) => {
+      faqText += `*${idx + 1}️⃣ ${faq.question}*\n`;
+    });
+
+    faqText += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    faqText += `👉 *Reply with a question number (1 - ${faqs.length}) to view the answer.*\n`;
+    faqText += `Or simply type your question in English/Hindi!\n`;
+    faqText += `*(Reply 0 to return to Main Menu)*`;
+
+    await this.reply(client, to, faqText, ChatStep.FAQ_MODE);
   }
 }
 

@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum FileType {
+  image
+  video
+  link
+  document
+}
+
+enum LeadRole {
+  BUYER
+  CHANNEL_PARTNER
+}
+
+// ==========================================
+// 1. Platter (Categories: Residential, Commercial, etc.)
+// ==========================================
+
+model Platter {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String   @unique // "Residential Projects", "Commercial Projects", "Plots & Other"
+  tagline     String?
+  description String?  @db.Text
+  seq         Int      @default(0)
+  status      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projects Projects[]
+
+  @@index([slug, status])
+}
+
+// ==========================================
+// 2. Channel Partner Registry
+// ==========================================
+
+model ChannelPartner {
+  id           String   @id @default(cuid())
+  fullName     String
+  firmName     String // Firm / Company Name
+  reraNumber   String   @unique
+  mobileNo     String
+  emailAddress String?
+  location     String?
+  status       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions ChatbotSession[]
+
+  @@index([reraNumber, mobileNo, firmName])
+}
+
+// ==========================================
+// 3. Projects & Assigned Documents
+// ==========================================
+
+model Projects {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  projectName      String   @unique
+  platterId        String?
+  platter          Platter? @relation(fields: [platterId], references: [id], onDelete: SetNull)
+  location         String?
+  shortDescription String?  @db.Text
+  tagline          String?
+  priceRange       String?
+  price            Int?
+  brochure         String? // Assigned Brochure Document (PDF)
+  status           Boolean  @default(true)
+  hasDocuments     Boolean  @default(true)
+  otherDetails     Json?
+  seq              Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  projectAmenities   ProjectAmenities[]
+  projectGallery     ProjectGallery[]
+  projectReras       ProjectRera[]
+  projectCollaterals ProjectCollateral[]
+  projectEnquiries   projectEnquiry[]
+
+  @@index([slug, projectName, status, platterId])
+}
+
+model ProjectAmenities {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  seq       Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model ProjectGallery {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String? // Title for collateral e.g. "Elevation", "Floor Plan", "Brochure"
+  fileType  FileType @default(image)
+  link      String // Image or Document file path / URL
+  alt       String?
+  seq       Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([projectId, fileType])
+}
+
+model ProjectRera {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reraNumber String
+  phase      String?
+  createdAt  DateTime @default(now())
+}
+
+model ProjectCollateral {
+  id        String    @id @default(cuid())
+  projectId String?
+  project   Projects? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  code      String    @default("CUSTOM") // "BROCHURE", "GALLERY", "FACTSHEET", "FLOOR_PLAN", "PAYMENT_PLAN", "LOCATION_MAP", "CUSTOM"
+  title     String // "Official PDF Brochure", "High-Res 3D Creatives & Gallery", etc.
+  subtitle  String? // "(Personalized with your Name, Firm & RERA)"
+  icon      String?   @default("📄") // Emoji icon e.g. "📄", "🖼️", "📑", "📐", "💰", "🗺️"
+  fileType  FileType  @default(document) // image, video, link, document
+  fileUrl   String? // File path or URL
+  content   String?   @db.Text // Text content / details for factsheet, specifications, or notes
+  seq       Int       @default(0) // Order priority in WhatsApp menu
+  status    Boolean   @default(true) // Dynamic Active / Inactive status toggle
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([projectId, status, seq])
+}
+
+// ==========================================
+// 4. Dynamic Bot FAQs
+// ==========================================
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  category  String?  @default("General") // "General", "M3M Noida", "Residential", "Commercial", "Collaterals", "Channel Partner"
+  keywords  String? // Search keywords: "cullinan, brochure, rera, commission, noida sector 94"
+  seq       Int      @default(0)
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category, status])
+}
+
+// ==========================================
+// 5. Chatbot Flow & Conversation Records
+// ==========================================
+
+model ChatbotSession {
+  id                 String          @id @default(cuid())
+  chatId             String          @unique
+  phone              String
+  name               String?
+  firmName           String?
+  reraNumber         String?
+  location           String?
+  role               String?         @default("CHANNEL_PARTNER")
+  step               String          @default("INITIAL")
+  selectedPlatterId  String?
+  selectedPropertyId String?
+  channelPartnerId   String?
+  channelPartner     ChannelPartner? @relation(fields: [channelPartnerId], references: [id], onDelete: SetNull)
+  lastActive         DateTime        @default(now())
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  messages ChatbotMessage[]
+
+  @@index([chatId, phone])
+}
+
+model ChatbotMessage {
+  id        String         @id @default(cuid())
+  sessionId String
+  session   ChatbotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  chatId    String
+  direction String // INCOMING | OUTGOING
+  step      String?
+  message   String?        @db.Text
+  mediaType String? // text | pdf | image
+  mediaUrl  String?        @db.Text
+  metadata  Json?
+  createdAt DateTime       @default(now())
+
+  @@index([sessionId, chatId, createdAt])
+}
+
+// ==========================================
+// 6. CRM Lead Capture & Enquiries
+// ==========================================
+
+model projectEnquiry {
+  id             String    @id @default(cuid())
+  projectId      String?
+  projects       Projects? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectName    String?
+  fullName       String?
+  emailAddress   String?
+  mobileNo       String
+  query          String?
+  classification String?
+  remarks        String?
+  dateAt         DateTime  @default(now())
+}
+
+model channelPartnerEnquiry {
+  id              String   @id @default(cuid())
+  fullName        String
+  emailAddress    String?
+  mobileNo        String
+  location        String?
+  agencyName      String?
+  reraCertifiedNo String?
+  message         String?
+  status          Boolean  @default(true)
+  dateAt          DateTime @default(now())
+}
