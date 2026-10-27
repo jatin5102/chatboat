@@ -1,8 +1,8 @@
 import { prisma } from "../../config/prisma.config.js";
-import { ICreateProject, IUpdateProject, ICreateGalleryItem } from "./project.interface.js";
-import { FileType } from "../../generated/prisma/enums.js";
+import { ICreateProject, IUpdateProject } from "./project.interface.js";
+import { paginate, PaginationParams } from "../../utils/pagination.utils.js";
 
-export const getList = async (platterId?: string) => {
+export const getList = async (platterId?: string, pagination?: PaginationParams) => {
   const where: any = {
     status: true,
   };
@@ -10,16 +10,22 @@ export const getList = async (platterId?: string) => {
     where.platterId = platterId;
   }
 
-  return prisma.projects.findMany({
+  const queryArgs = {
     where,
     include: {
       platter: true,
-      projectAmenities: { orderBy: { seq: "asc" } },
-      projectGallery: { orderBy: { seq: "asc" } },
-      projectReras: true,
     },
-    orderBy: { seq: "asc" },
-  });
+    orderBy: { seq: "asc" as const },
+  };
+
+  if (pagination && (pagination.page !== undefined || pagination.limit !== undefined)) {
+    return paginate(prisma.projects, queryArgs, {
+      page: pagination.page || 1,
+      limit: pagination.limit || 10,
+    });
+  }
+
+  return prisma.projects.findMany(queryArgs);
 };
 
 export const getById = async (idOrSlug: string) => {
@@ -29,9 +35,6 @@ export const getById = async (idOrSlug: string) => {
     },
     include: {
       platter: true,
-      projectAmenities: { orderBy: { seq: "asc" } },
-      projectGallery: { orderBy: { seq: "asc" } },
-      projectReras: true,
     },
   });
 };
@@ -59,25 +62,10 @@ export const create = async (data: ICreateProject) => {
       status: data.status !== undefined ? data.status : true,
       hasDocuments: !!data.brochure,
     },
+    include: {
+      platter: true,
+    },
   });
-
-  if (data.reraNumber) {
-    await prisma.projectRera.create({
-      data: {
-        projectId: project.id,
-        reraNumber: data.reraNumber,
-        phase: "Main Phase",
-      },
-    });
-  }
-
-  if (data.amenities && data.amenities.length > 0) {
-    for (const title of data.amenities) {
-      await prisma.projectAmenities.create({
-        data: { projectId: project.id, title },
-      });
-    }
-  }
 
   return project;
 };
@@ -88,51 +76,12 @@ export const update = async (id: string, data: IUpdateProject) => {
     data,
     include: {
       platter: true,
-      projectGallery: true,
-      projectAmenities: true,
-      projectReras: true,
     },
   });
 };
 
 export const destroy = async (id: string) => {
   return prisma.projects.delete({
-    where: { id },
-  });
-};
-
-export const getGallery = async (projectId: string) => {
-  return prisma.projectGallery.findMany({
-    where: { projectId },
-    orderBy: { seq: "asc" },
-  });
-};
-
-export const addGalleryItem = async (projectId: string, data: ICreateGalleryItem) => {
-  return prisma.projectGallery.create({
-    data: {
-      projectId,
-      title: data.title || null,
-      fileType: data.fileType || FileType.image,
-      link: data.link,
-      alt: data.alt || null,
-      seq: data.seq ?? 0,
-    },
-  });
-};
-
-export const updateGalleryItem = async (
-  id: string,
-  data: Partial<{ title: string; fileType: FileType; link: string; alt: string; seq: number }>
-) => {
-  return prisma.projectGallery.update({
-    where: { id },
-    data,
-  });
-};
-
-export const deleteGalleryItem = async (id: string) => {
-  return prisma.projectGallery.delete({
     where: { id },
   });
 };
@@ -145,7 +94,7 @@ export const setDocuments = async (
     documents?: Array<{
       title: string;
       link: string;
-      fileType?: FileType;
+      fileType?: any;
       alt?: string;
       seq?: number;
     }>;
@@ -160,70 +109,11 @@ export const setDocuments = async (
     updateData.hasDocuments = data.hasDocuments;
   }
 
-  // Update project record
-  await prisma.projects.update({
+  return prisma.projects.update({
     where: { id: projectId },
     data: updateData,
-  });
-
-  // If additional documents were provided, add to ProjectGallery
-  if (data.documents && data.documents.length > 0) {
-    for (const doc of data.documents) {
-      await prisma.projectGallery.create({
-        data: {
-          projectId,
-          title: doc.title || "Project Document",
-          fileType: doc.fileType || FileType.document,
-          link: doc.link,
-          alt: doc.alt || null,
-          seq: doc.seq ?? 0,
-        },
-      });
-    }
-  }
-
-  // Sync ProjectCollateral table if brochure was set
-  if (data.brochure) {
-    const existingBrochureCollateral = await prisma.projectCollateral.findFirst({
-      where: {
-        projectId,
-        code: "BROCHURE",
-      },
-    });
-
-    if (existingBrochureCollateral) {
-      await prisma.projectCollateral.update({
-        where: { id: existingBrochureCollateral.id },
-        data: {
-          fileUrl: data.brochure,
-          status: true,
-        },
-      });
-    } else {
-      await prisma.projectCollateral.create({
-        data: {
-          projectId,
-          code: "BROCHURE",
-          title: "Official PDF Brochure",
-          subtitle: "(Personalized with your Name, Firm & RERA)",
-          icon: "📄",
-          fileType: FileType.document,
-          fileUrl: data.brochure,
-          seq: 1,
-          status: true,
-        },
-      });
-    }
-  }
-
-  return prisma.projects.findUnique({
-    where: { id: projectId },
     include: {
       platter: true,
-      projectGallery: { orderBy: { seq: "asc" } },
-      projectCollaterals: { orderBy: { seq: "asc" } },
-      projectAmenities: true,
-      projectReras: true,
     },
   });
 };

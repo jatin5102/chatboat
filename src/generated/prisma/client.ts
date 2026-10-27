@@ -57,16 +57,6 @@ export type ChannelPartner = Prisma.ChannelPartnerModel
  */
 export type Projects = Prisma.ProjectsModel
 /**
- * Model ProjectAmenities
- * 
- */
-export type ProjectAmenities = Prisma.ProjectAmenitiesModel
-/**
- * Model ProjectGallery
- * 
- */
-export type ProjectGallery = Prisma.ProjectGalleryModel
-/**
  * Model ProjectRera
  * 
  */

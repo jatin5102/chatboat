@@ -1,5 +1,3 @@
-import { FileType } from "../../generated/prisma/enums.js";
-
 export interface IProject {
   id: string;
   slug: string;
@@ -29,7 +27,6 @@ export interface ICreateProject {
   seq?: number;
   status?: boolean;
   reraNumber?: string;
-  amenities?: string[];
 }
 
 export interface IUpdateProject {
@@ -44,12 +41,4 @@ export interface IUpdateProject {
   brochure?: string;
   seq?: number;
   status?: boolean;
-}
-
-export interface ICreateGalleryItem {
-  title?: string;
-  fileType?: FileType;
-  link: string;
-  alt?: string;
-  seq?: number;
 }

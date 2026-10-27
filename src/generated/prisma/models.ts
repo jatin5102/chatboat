@@ -11,8 +11,6 @@
 export type * from './models/Platter.js'
 export type * from './models/ChannelPartner.js'
 export type * from './models/Projects.js'
-export type * from './models/ProjectAmenities.js'
-export type * from './models/ProjectGallery.js'
 export type * from './models/ProjectRera.js'
 export type * from './models/ProjectCollateral.js'
 export type * from './models/Faq.js'

@@ -6,7 +6,10 @@ import { ApiError } from "../../utils/apiError.utils.js";
 
 export const getList = asyncHandler(async (req: Request, res: Response) => {
   const search = req.query.search as string | undefined;
-  const records = await cpService.getList(search);
+  const page = req.query.page ? Number(req.query.page) : (req.query.all === "true" ? undefined : 1);
+  const limit = req.query.limit ? Number(req.query.limit) : (req.query.all === "true" ? undefined : 10);
+
+  const records = await cpService.getList(search, page !== undefined ? { page, limit } : undefined);
   successResponse(res, 200, "Channel partners fetched successfully", records);
 });
 

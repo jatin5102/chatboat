@@ -5,6 +5,7 @@ import { ProjectRoutes } from "./projects/project.route.js";
 import { ChatbotRoutes } from "./chatbot/chatbot.route.js";
 import { CollateralRoutes } from "./collateral/collateral.route.js";
 import { UploadRoutes } from "./upload/upload.route.js";
+import { FaqRoutes } from "./faq/faq.route.js";
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use("/projects", ProjectRoutes);
 router.use("/chatbot", ChatbotRoutes);
 router.use("/collaterals", CollateralRoutes);
 router.use("/upload", UploadRoutes);
+router.use("/faqs", FaqRoutes);
 
 export default router;

@@ -162,7 +162,7 @@ export class ChatRecordService {
     chatId: string,
     messageText: string,
     step: string,
-    mediaType: "text" | "pdf" | "image" = "text",
+    mediaType: "text" | "pdf" | "image" | "video" | "document" = "text",
     mediaUrl?: string,
     metadata?: any
   ): Promise<void> {

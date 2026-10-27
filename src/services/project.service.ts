@@ -3,7 +3,6 @@ import fs from "node:fs";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { prisma } from "../config/prisma.config.js";
 import { seedProperties } from "../utils/seedProjects.utils.js";
-import { FileType } from "../generated/prisma/enums.js";
 import { collateralService } from "./collateral.service.js";
 
 export interface BotProject {
@@ -17,15 +16,9 @@ export interface BotProject {
   priceRange: string;
   reraNumber: string;
   description: string;
-  amenities: string[];
+  amenities?: string[];
   brochurePath: string;
-  imagePaths: string[];
-  galleryItems: Array<{
-    id: string;
-    title: string | null;
-    fileType: string;
-    link: string;
-  }>;
+  imagePaths?: string[];
 }
 
 export class ProjectService {
@@ -104,27 +97,42 @@ export class ProjectService {
         color: rgb(0.22, 0.74, 0.97),
       });
 
-      page.drawText("EXECUTIVE PROJECT OVERVIEW & SPECIFICATIONS", {
+      page.drawText("EXECUTIVE PROJECT SPECIFICATIONS", {
         x: 35,
         y: height - 165,
         size: 13,
         font: fontBold,
-        color: rgb(0.12, 0.16, 0.22),
+        color: rgb(0.1, 0.15, 0.25),
       });
 
-      const desc = p.shortDescription || p.tagline || "Exclusive modern luxury real estate development.";
-      page.drawText(desc.slice(0, 95), {
-        x: 35,
-        y: height - 190,
-        size: 10,
-        font: fontRegular,
-        color: rgb(0.3, 0.35, 0.4),
+      const defaultHighlights = [
+        "Strategic location in Noida Prime Zone",
+        "High-street luxury retail & grand lifestyle suites",
+        "100% Power backup, ample parking & multi-tier security",
+        "UP RERA Approved & title-clear asset",
+      ];
+
+      let curY = height - 200;
+      defaultHighlights.forEach((h) => {
+        page.drawCircle({
+          x: 45,
+          y: curY + 3,
+          size: 3,
+          color: rgb(0.2, 0.6, 0.9),
+        });
+        page.drawText(h, {
+          x: 58,
+          y: curY,
+          size: 11,
+          font: fontRegular,
+          color: rgb(0.2, 0.25, 0.3),
+        });
+        curY -= 26;
       });
 
       const pdfBytes = await pdfDoc.save();
       fs.writeFileSync(targetPath, pdfBytes);
 
-      // Save to uploads as well for consistency
       const uploadsCopy = path.resolve(this.rootDir, `uploads/properties/${slug}/brochure.pdf`);
       fs.mkdirSync(path.dirname(uploadsCopy), { recursive: true });
       fs.writeFileSync(uploadsCopy, pdfBytes);
@@ -153,6 +161,10 @@ export class ProjectService {
       await seedProperties();
     }
     await collateralService.ensureDefaultCollaterals();
+    const platters = await prisma.platter.findMany();
+    for (const plt of platters) {
+      await collateralService.ensurePlatterCollaterals(plt.id);
+    }
   }
 
   /**
@@ -172,12 +184,6 @@ export class ProjectService {
       where,
       include: {
         platter: true,
-        projectAmenities: {
-          orderBy: { seq: "asc" },
-        },
-        projectGallery: {
-          orderBy: { seq: "asc" },
-        },
         projectReras: true,
       },
       orderBy: { seq: "asc" },
@@ -199,24 +205,7 @@ export class ProjectService {
         otherDetails.reraNumber ||
         "UPRERAPRJ442214";
 
-      const amenities =
-        p.projectAmenities.length > 0
-          ? p.projectAmenities.map((a) => a.title)
-          : ["Gated Community", "Clubhouse & Gym", "24x7 Security", "Landscaped Promenade"];
-
       const brochurePath = await this.ensureBrochureFile(p);
-
-      const imagePaths = p.projectGallery
-        .filter((g) => g.fileType === "image")
-        .map((g) => this.resolvePath(g.link))
-        .filter((pth) => fs.existsSync(pth));
-
-      const galleryItems = p.projectGallery.map((g) => ({
-        id: g.id,
-        title: g.title,
-        fileType: g.fileType,
-        link: this.resolvePath(g.link),
-      }));
 
       result.push({
         id: p.id,
@@ -229,10 +218,9 @@ export class ProjectService {
         priceRange,
         reraNumber,
         description: p.shortDescription || p.projectName,
-        amenities,
+        amenities: [],
         brochurePath,
-        imagePaths,
-        galleryItems,
+        imagePaths: [],
       });
     }
 
@@ -260,7 +248,6 @@ export class ProjectService {
     seq?: number;
     status?: boolean;
     reraNumber?: string;
-    amenities?: string[];
   }) {
     const slug =
       data.slug ||
@@ -296,17 +283,6 @@ export class ProjectService {
       });
     }
 
-    if (data.amenities && data.amenities.length > 0) {
-      for (const title of data.amenities) {
-        await prisma.projectAmenities.create({
-          data: {
-            projectId: project.id,
-            title,
-          },
-        });
-      }
-    }
-
     return project;
   }
 
@@ -332,8 +308,6 @@ export class ProjectService {
       data,
       include: {
         platter: true,
-        projectGallery: true,
-        projectAmenities: true,
         projectReras: true,
       },
     });
@@ -341,60 +315,6 @@ export class ProjectService {
 
   public async deleteProject(id: string) {
     return prisma.projects.delete({
-      where: { id },
-    });
-  }
-
-  /**
-   * Project Gallery CRUD
-   */
-  public async getGallery(projectId: string) {
-    return prisma.projectGallery.findMany({
-      where: { projectId },
-      orderBy: { seq: "asc" },
-    });
-  }
-
-  public async addGalleryItem(
-    projectId: string,
-    data: {
-      title?: string;
-      fileType?: FileType;
-      link: string;
-      alt?: string;
-      seq?: number;
-    }
-  ) {
-    return prisma.projectGallery.create({
-      data: {
-        projectId,
-        title: data.title || null,
-        fileType: data.fileType || FileType.image,
-        link: data.link,
-        alt: data.alt || null,
-        seq: data.seq ?? 0,
-      },
-    });
-  }
-
-  public async updateGalleryItem(
-    id: string,
-    data: Partial<{
-      title: string;
-      fileType: FileType;
-      link: string;
-      alt: string;
-      seq: number;
-    }>
-  ) {
-    return prisma.projectGallery.update({
-      where: { id },
-      data,
-    });
-  }
-
-  public async deleteGalleryItem(id: string) {
-    return prisma.projectGallery.delete({
       where: { id },
     });
   }

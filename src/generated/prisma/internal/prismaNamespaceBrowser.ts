@@ -54,8 +54,6 @@ export const ModelName = {
   Platter: 'Platter',
   ChannelPartner: 'ChannelPartner',
   Projects: 'Projects',
-  ProjectAmenities: 'ProjectAmenities',
-  ProjectGallery: 'ProjectGallery',
   ProjectRera: 'ProjectRera',
   ProjectCollateral: 'ProjectCollateral',
   Faq: 'Faq',
@@ -134,31 +132,6 @@ export const ProjectsScalarFieldEnum = {
 export type ProjectsScalarFieldEnum = (typeof ProjectsScalarFieldEnum)[keyof typeof ProjectsScalarFieldEnum]
 
 
-export const ProjectAmenitiesScalarFieldEnum = {
-  id: 'id',
-  projectId: 'projectId',
-  title: 'title',
-  seq: 'seq',
-  createdAt: 'createdAt'
-} as const
-
-export type ProjectAmenitiesScalarFieldEnum = (typeof ProjectAmenitiesScalarFieldEnum)[keyof typeof ProjectAmenitiesScalarFieldEnum]
-
-
-export const ProjectGalleryScalarFieldEnum = {
-  id: 'id',
-  projectId: 'projectId',
-  title: 'title',
-  fileType: 'fileType',
-  link: 'link',
-  alt: 'alt',
-  seq: 'seq',
-  createdAt: 'createdAt'
-} as const
-
-export type ProjectGalleryScalarFieldEnum = (typeof ProjectGalleryScalarFieldEnum)[keyof typeof ProjectGalleryScalarFieldEnum]
-
-
 export const ProjectReraScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
@@ -172,6 +145,7 @@ export type ProjectReraScalarFieldEnum = (typeof ProjectReraScalarFieldEnum)[key
 
 export const ProjectCollateralScalarFieldEnum = {
   id: 'id',
+  platterId: 'platterId',
   projectId: 'projectId',
   code: 'code',
   title: 'title',

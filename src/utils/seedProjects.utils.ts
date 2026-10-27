@@ -162,6 +162,155 @@ async function createProjectImage(
   await sharp(Buffer.from(svg)).jpeg({ quality: 90 }).toFile(filePath);
 }
 
+async function createFloorPlanImage(
+  filePath: string,
+  projectName: string,
+  layoutTitle: string
+) {
+  const width = 1200;
+  const height = 800;
+
+  const svg = `
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0b192c;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#1e3e62;stop-opacity:1" />
+        </linearGradient>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2a4768" stroke-width="0.8"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#bg)" />
+      <rect width="100%" height="100%" fill="url(#grid)" />
+
+      <!-- Architectural layout blueprint outlines -->
+      <rect x="150" y="120" width="900" height="520" fill="none" stroke="#60a5fa" stroke-width="3" rx="10"/>
+      <rect x="180" y="150" width="380" height="260" fill="#1e3a8a" fill-opacity="0.3" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <rect x="580" y="150" width="440" height="260" fill="#1e3a8a" fill-opacity="0.3" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <rect x="180" y="430" width="400" height="180" fill="#1e3a8a" fill-opacity="0.3" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <rect x="600" y="430" width="420" height="180" fill="#1e3a8a" fill-opacity="0.3" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+      <!-- Blueprint text labels -->
+      <text x="370" y="275" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">MASTER SUITE / ZONE A</text>
+      <text x="370" y="305" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#93c5fd" text-anchor="middle">24'0" x 16'6" • Clear Heights 11.5ft</text>
+
+      <text x="800" y="275" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">EXPANSIVE LIVING &amp; DINING / ZONE B</text>
+      <text x="800" y="305" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#93c5fd" text-anchor="middle">32'0" x 20'0" • Wrap-around Balcony</text>
+
+      <text x="380" y="525" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">MODULAR KITCHEN &amp; SERVICE DECK</text>
+      <text x="810" y="525" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">GUEST SUITES &amp; POWDER ROOM</text>
+
+      <!-- Header & Footer -->
+      <rect x="0" y="0" width="1200" height="75" fill="#030712" opacity="0.8"/>
+      <text x="50" y="48" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="bold" fill="#f8fafc">
+        ${projectName.toUpperCase().replace(/&/g, '&amp;')} — ${layoutTitle.toUpperCase().replace(/&/g, '&amp;')}
+      </text>
+
+      <rect x="0" y="735" width="1200" height="65" fill="#030712" opacity="0.85"/>
+      <text x="50" y="773" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#38bdf8">
+        OFFICIAL ARCHITECTURAL UNIT LAYOUT &amp; FLOOR PLAN SPECIFICATION
+      </text>
+    </svg>
+  `;
+
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await sharp(Buffer.from(svg)).jpeg({ quality: 90 }).toFile(filePath);
+}
+
+async function createOppDocPdf(
+  filePath: string,
+  projectName: string,
+  category: string,
+  highlights: string[]
+) {
+  const pdfDoc = await PDFDocument.create();
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+  const page = pdfDoc.addPage([595.28, 841.89]);
+  const { width, height } = page.getSize();
+
+  // Header Banner
+  page.drawRectangle({
+    x: 30,
+    y: height - 130,
+    width: width - 60,
+    height: 90,
+    color: rgb(0.08, 0.15, 0.28),
+  });
+
+  page.drawText(`INVESTMENT OPPORTUNITY DOCUMENT (OPP DOC)`, {
+    x: 50,
+    y: height - 70,
+    size: 14,
+    font: fontBold,
+    color: rgb(0.22, 0.74, 0.97),
+  });
+
+  page.drawText(`${projectName.toUpperCase()} - ${category.toUpperCase()}`, {
+    x: 50,
+    y: height - 98,
+    size: 18,
+    font: fontBold,
+    color: rgb(1, 1, 1),
+  });
+
+  page.drawText("EXECUTIVE COMMERCIAL & WEALTH OPPORTUNITY", {
+    x: 40,
+    y: height - 165,
+    size: 12,
+    font: fontBold,
+    color: rgb(0.1, 0.2, 0.35),
+  });
+
+  let curY = height - 200;
+  highlights.forEach((h) => {
+    page.drawCircle({
+      x: 50,
+      y: curY + 3,
+      size: 3.5,
+      color: rgb(0.15, 0.55, 0.9),
+    });
+    page.drawText(h, {
+      x: 65,
+      y: curY,
+      size: 11,
+      font: fontRegular,
+      color: rgb(0.2, 0.25, 0.3),
+    });
+    curY -= 30;
+  });
+
+  page.drawRectangle({
+    x: 30,
+    y: 40,
+    width: width - 60,
+    height: 50,
+    color: rgb(0.92, 0.96, 1),
+  });
+
+  page.drawText("Exclusive Channel Partner Investment Memorandum", {
+    x: 45,
+    y: 70,
+    size: 10,
+    font: fontBold,
+    color: rgb(0.1, 0.2, 0.35),
+  });
+
+  page.drawText("Confidential & Proprietary. Pricing, terms and inventory subject to official allotment.", {
+    x: 45,
+    y: 54,
+    size: 8.5,
+    font: fontRegular,
+    color: rgb(0.35, 0.45, 0.55),
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, pdfBytes);
+}
+
 export async function seedProperties() {
   console.log("🌱 Seeding M3M Noida Platters, Projects, Channel Partners & FAQs...");
 
@@ -169,10 +318,14 @@ export async function seedProperties() {
   const cullinanBrochure = "assets/properties/m3m-cullinan/brochure.pdf";
   const cullinanElevation = "assets/properties/m3m-cullinan/elevation.jpg";
   const cullinanRetail = "assets/properties/m3m-cullinan/retail_avenue.jpg";
+  const cullinanFloorPlan = "assets/properties/m3m-cullinan/floor_plan.jpg";
+  const cullinanOppDoc = "assets/properties/m3m-cullinan/opp_doc.pdf";
 
   const lineBrochure = "assets/properties/m3m-the-line/brochure.pdf";
   const lineElevation = "assets/properties/m3m-the-line/elevation.jpg";
   const lineCommercial = "assets/properties/m3m-the-line/commercial_arcade.jpg";
+  const lineFloorPlan = "assets/properties/m3m-the-line/floor_plan.jpg";
+  const lineOppDoc = "assets/properties/m3m-the-line/opp_doc.pdf";
 
   await ensureFileExists(cullinanBrochure, () =>
     createBrochurePdf(
@@ -210,6 +363,28 @@ export async function seedProperties() {
     )
   );
 
+  await ensureFileExists(cullinanFloorPlan, () =>
+    createFloorPlanImage(
+      cullinanFloorPlan,
+      "M3M The Cullinan",
+      "4 BHK Sky Mansion Master Layout"
+    )
+  );
+
+  await ensureFileExists(cullinanOppDoc, () =>
+    createOppDocPdf(
+      cullinanOppDoc,
+      "M3M The Cullinan",
+      "Residential Sky Residences",
+      [
+        "Prime Sector 94 Noida Expressway landmark, 0-KM from South Delhi",
+        "High capital appreciation corridor with proven 18-22% annual growth",
+        "Exclusive 40:60 payment scheme with high net-worth tenancy demand",
+        "Private plunge pools, concierge desk and helipad access",
+      ]
+    )
+  );
+
   await ensureFileExists(lineBrochure, () =>
     createBrochurePdf(
       lineBrochure,
@@ -243,6 +418,28 @@ export async function seedProperties() {
       "Double-Height Retail Shops & Gourmet Dining Plaza",
       "#1c1917",
       "#78350f"
+    )
+  );
+
+  await ensureFileExists(lineFloorPlan, () =>
+    createFloorPlanImage(
+      lineFloorPlan,
+      "M3M The Line",
+      "High-Street Commercial Retail & Studio Layout"
+    )
+  );
+
+  await ensureFileExists(lineOppDoc, () =>
+    createOppDocPdf(
+      lineOppDoc,
+      "M3M The Line",
+      "Commercial High Street & Studio Suites",
+      [
+        "Situated directly opposite Sector 72 Central Noida Metro Station",
+        "Guaranteed footfalls from 50,000+ residential families in 2KM radius",
+        "Pre-leased retail units with 8.5% initial lease guarantee yield",
+        "Flexible 40:60 payment structure starting from ₹85 Lacs*",
+      ]
     )
   );
 
@@ -311,40 +508,6 @@ export async function seedProperties() {
         phase: "Phase 1 & 2",
       },
     });
-
-    for (const title of [
-      "1,00,000 sq.ft Clubhouse & Sky Lounge",
-      "7 Swimming Pools & Heated Olympic Pool",
-      "Private High-Speed Access Elevators",
-      "Direct 0-KM Kalindi Kunj Delhi Access",
-      "Helipad & Concierge Services",
-    ]) {
-      await prisma.projectAmenities.create({
-        data: { projectId: p1.id, title },
-      });
-    }
-
-    await prisma.projectGallery.create({
-      data: {
-        projectId: p1.id,
-        title: "Iconic Tower Elevation",
-        fileType: "image",
-        link: cullinanElevation,
-        alt: "M3M The Cullinan Elevation",
-        seq: 1,
-      },
-    });
-
-    await prisma.projectGallery.create({
-      data: {
-        projectId: p1.id,
-        title: "Official Project Brochure (PDF)",
-        fileType: "document",
-        link: cullinanBrochure,
-        alt: "Cullinan Brochure",
-        seq: 2,
-      },
-    });
   }
 
   // Project 2: M3M The Line (Residential Studio Suites)
@@ -374,28 +537,6 @@ export async function seedProperties() {
         projectId: p2.id,
         reraNumber: "UPRERAPRJ246070",
         phase: "Phase 1",
-      },
-    });
-
-    for (const title of [
-      "Furnished Studio Suites",
-      "Rooftop Infinity Pool & Gym",
-      "Opposite Metro Station Connectivity",
-      "High Rental Yield & Corporate Demand",
-    ]) {
-      await prisma.projectAmenities.create({
-        data: { projectId: p2.id, title },
-      });
-    }
-
-    await prisma.projectGallery.create({
-      data: {
-        projectId: p2.id,
-        title: "Main Façade & Sky Deck",
-        fileType: "image",
-        link: lineElevation,
-        alt: "M3M The Line Elevation",
-        seq: 1,
       },
     });
   }
@@ -429,17 +570,6 @@ export async function seedProperties() {
         phase: "Commercial Arcade",
       },
     });
-
-    await prisma.projectGallery.create({
-      data: {
-        projectId: p3.id,
-        title: "High-Street Retail Promenade",
-        fileType: "image",
-        link: cullinanRetail,
-        alt: "Cullinan Avenue Retail",
-        seq: 1,
-      },
-    });
   }
 
   // Project 4: M3M The Line Commercial (Commercial)
@@ -469,17 +599,6 @@ export async function seedProperties() {
         projectId: p4.id,
         reraNumber: "UPRERAPRJ246070",
         phase: "Commercial Wing",
-      },
-    });
-
-    await prisma.projectGallery.create({
-      data: {
-        projectId: p4.id,
-        title: "Commercial Retail Arcade",
-        fileType: "image",
-        link: lineCommercial,
-        alt: "The Line Commercial Arcade",
-        seq: 1,
       },
     });
   }
@@ -565,11 +684,17 @@ export async function seedProperties() {
     });
   }
 
-  // 6. Ensure Each Project Has Its Own Project Collaterals
+  // 6. Ensure Each Platter Has Its Own Collaterals (Story, EDM, Video, Brochure, Floor Plans, Opp Doc)
+  const allPlatters = await prisma.platter.findMany();
+  for (const plt of allPlatters) {
+    await collateralService.ensurePlatterCollaterals(plt.id);
+  }
+
+  // 7. Ensure Default Project Collaterals
   const allProjects = await prisma.projects.findMany();
   for (const proj of allProjects) {
     await collateralService.ensureProjectCollaterals(proj.id);
   }
 
-  console.log("✅ Seeded M3M Noida Platters, Projects, Documents, Channel Partners & FAQs successfully!");
+  console.log("✅ Seeded M3M Noida Platters, Collaterals, Projects, Documents, Channel Partners & FAQs successfully!");
 }

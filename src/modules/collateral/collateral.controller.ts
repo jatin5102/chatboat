@@ -1,22 +1,77 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
+import { prisma } from "../../config/prisma.config.js";
 import { collateralService } from "../../services/collateral.service.js";
 import { successResponse } from "../../utils/responseHandler.utils.js";
 import { ApiError } from "../../utils/apiError.utils.js";
+import { paginate } from "../../utils/pagination.utils.js";
 
 /**
- * Get all collaterals with optional query filters (projectId, status, code)
+ * Get all collaterals with optional query filters (platterId, projectId, status, code) and pagination
  */
 export const getCollaterals = asyncHandler(async (req: Request, res: Response) => {
-  const { projectId, status, code } = req.query;
+  const { platterId, projectId, status, code, page, limit, all } = req.query;
 
   const filter: any = {};
+  if (platterId) filter.platterId = String(platterId);
   if (projectId) filter.projectId = String(projectId);
   if (status !== undefined) filter.status = status === "true";
   if (code) filter.code = String(code);
 
+  const pageNum = page ? Number(page) : (all === "true" ? undefined : 1);
+  const limitNum = limit ? Number(limit) : (all === "true" ? undefined : 10);
+
+  if (pageNum !== undefined) {
+    const result = await paginate(
+      prisma.projectCollateral,
+      {
+        where: filter,
+        orderBy: { seq: "asc" as const },
+        include: { platter: true, project: true },
+      },
+      { page: pageNum, limit: limitNum || 10 }
+    );
+    successResponse(res, 200, "Collaterals fetched successfully", result);
+    return;
+  }
+
   const collaterals = await collateralService.getAllCollaterals(filter);
   successResponse(res, 200, "Collaterals fetched successfully", collaterals);
+});
+
+/**
+ * Get active collaterals for a specific platter
+ */
+export const getActivePlatterCollaterals = asyncHandler(async (req: Request, res: Response) => {
+  const platterId = String(req.params.platterId);
+  const collaterals = await collateralService.getActiveCollateralsForPlatter(platterId);
+  successResponse(res, 200, "Active platter collaterals fetched successfully", collaterals);
+});
+
+/**
+ * Initialize platter-specific collaterals for a platter
+ */
+export const initPlatterCollaterals = asyncHandler(async (req: Request, res: Response) => {
+  const platterId = String(req.params.platterId);
+  await collateralService.ensurePlatterCollaterals(platterId);
+  const result = await collateralService.getAllCollaterals({ platterId });
+  successResponse(res, 201, "Platter collaterals initialized successfully", result);
+});
+
+/**
+ * Configure which collaterals are active for a specific platter.
+ * Accepts e.g. { activeCodes: ["STORY", "EDM", "BROCHURE"] }
+ */
+export const configurePlatterCollaterals = asyncHandler(async (req: Request, res: Response) => {
+  const platterId = String(req.params.platterId);
+  const { activeCodes } = req.body;
+
+  if (!Array.isArray(activeCodes)) {
+    throw new ApiError(400, "activeCodes must be an array of collateral codes (e.g. ['STORY', 'EDM'])");
+  }
+
+  const result = await collateralService.configurePlatterCollaterals(platterId, activeCodes);
+  successResponse(res, 200, `Platter collaterals configured successfully: [${activeCodes.join(", ")}] active`, result);
 });
 
 /**
@@ -46,13 +101,14 @@ export const getCollateralById = asyncHandler(async (req: Request, res: Response
  * Create a new collateral
  */
 export const createCollateral = asyncHandler(async (req: Request, res: Response) => {
-  const { projectId, code, title, subtitle, icon, fileType, fileUrl, content, seq, status } = req.body;
+  const { platterId, projectId, code, title, subtitle, icon, fileType, fileUrl, content, seq, status } = req.body;
 
   if (!title) {
     throw new ApiError(400, "Collateral title is required");
   }
 
   const collateral = await collateralService.createCollateral({
+    platterId,
     projectId,
     code,
     title,
@@ -73,9 +129,10 @@ export const createCollateral = asyncHandler(async (req: Request, res: Response)
  */
 export const updateCollateral = asyncHandler(async (req: Request, res: Response) => {
   const id = String(req.params.id);
-  const { projectId, code, title, subtitle, icon, fileType, fileUrl, content, seq, status } = req.body;
+  const { platterId, projectId, code, title, subtitle, icon, fileType, fileUrl, content, seq, status } = req.body;
 
   const updated = await collateralService.updateCollateral(id, {
+    platterId,
     projectId,
     code,
     title,

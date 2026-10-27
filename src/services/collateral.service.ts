@@ -3,6 +3,7 @@ import { FileType } from "../generated/prisma/enums.js";
 
 export interface CollateralItem {
   id: string;
+  platterId?: string | null;
   projectId?: string | null;
   code: string;
   title: string;
@@ -15,194 +16,287 @@ export interface CollateralItem {
   status: boolean;
 }
 
+export const DEFAULT_COLLATERALS = [
+  {
+    code: "STORY",
+    title: "Whatsapp Story",
+    subtitle: "(Personalized)",
+    icon: "📱",
+    fileType: FileType.image,
+    seq: 1,
+    status: true,
+  },
+  {
+    code: "EDM",
+    title: "Whatsapp EDM",
+    subtitle: "(Personalized)",
+    icon: "✨",
+    fileType: FileType.document,
+    seq: 2,
+    status: true,
+  },
+  {
+    code: "VIDEO",
+    title: "Whatsapp Video",
+    subtitle: "(Personalized)",
+    icon: "🎥",
+    fileType: FileType.video,
+    seq: 3,
+    status: true,
+  },
+  {
+    code: "BROCHURE",
+    title: "Brochure",
+    subtitle: null,
+    icon: "📄",
+    fileType: FileType.document,
+    seq: 4,
+    status: true,
+  },
+  {
+    code: "FLOOR_PLANS",
+    title: "Floor Plans",
+    subtitle: null,
+    icon: "📐",
+    fileType: FileType.image,
+    seq: 5,
+    status: true,
+  },
+  {
+    code: "OPP_DOC",
+    title: "Opp Doc",
+    subtitle: "(Personalized)",
+    icon: "📑",
+    fileType: FileType.document,
+    seq: 6,
+    status: true,
+  },
+];
+
 export class CollateralService {
   /**
-   * Ensure default master collaterals exist in database.
+   * Helper to determine appropriate default media files per platter.
    */
-  public async ensureDefaultCollaterals(): Promise<void> {
-    const count = await prisma.projectCollateral.count();
-    if (count === 0) {
-      await prisma.projectCollateral.createMany({
-        data: [
-          {
-            code: "BROCHURE",
-            title: "Official PDF Brochure",
-            subtitle: "(Personalized with your Name, Firm & RERA)",
-            icon: "📄",
-            fileType: FileType.document,
-            seq: 1,
-            status: true,
-          },
-          {
-            code: "GALLERY",
-            title: "High-Res 3D Creatives & Gallery",
-            subtitle: "(Watermarked with your Firm Details)",
-            icon: "🖼️",
-            fileType: FileType.image,
-            seq: 2,
-            status: true,
-          },
-          {
-            code: "FACTSHEET",
-            title: "Project Factsheet & Specifications",
-            subtitle: "(Amenities, Layouts & Pricing)",
-            icon: "📑",
-            fileType: FileType.document,
-            seq: 3,
-            status: true,
-          },
-          {
-            code: "FLOOR_PLAN",
-            title: "Master Layout & Floor Plans",
-            subtitle: "(Unit configurations & tower maps)",
-            icon: "📐",
-            fileType: FileType.document,
-            seq: 4,
-            status: true,
-          },
-          {
-            code: "PAYMENT_PLAN",
-            title: "Payment Plan & Commercial Terms",
-            subtitle: "(Construction linked & flexible plans)",
-            icon: "💰",
-            fileType: FileType.document,
-            seq: 5,
-            status: true,
-          },
-          {
-            code: "LOCATION_MAP",
-            title: "Location Map & Connectivity",
-            subtitle: "(Expressway & Metro proximity highlights)",
-            icon: "🗺️",
-            fileType: FileType.image,
-            seq: 6,
-            status: true,
-          },
-        ],
-      });
-      console.log("✅ Seeded default marketing collaterals into ProjectCollateral table.");
+  public getDefaultFileForPlatter(platterSlug: string, code: string): string | null {
+    const isResidential = (platterSlug || '').toLowerCase().includes('residential');
+
+    switch (code) {
+      case 'STORY':
+        return isResidential
+          ? 'assets/properties/m3m-cullinan/elevation.jpg'
+          : 'assets/properties/m3m-the-line/commercial_arcade.jpg';
+      case 'EDM':
+        return isResidential
+          ? 'assets/properties/m3m-cullinan/elevation.jpg'
+          : 'assets/properties/m3m-the-line/commercial_arcade.jpg';
+      case 'BROCHURE':
+        return isResidential
+          ? 'assets/properties/m3m-cullinan/brochure.pdf'
+          : 'assets/properties/m3m-the-line/brochure.pdf';
+      case 'FLOOR_PLANS':
+        return isResidential
+          ? 'assets/properties/m3m-cullinan/floor_plan.jpg'
+          : 'assets/properties/m3m-the-line/floor_plan.jpg';
+      case 'OPP_DOC':
+        return isResidential
+          ? 'assets/properties/m3m-cullinan/opp_doc.pdf'
+          : 'assets/properties/m3m-the-line/opp_doc.pdf';
+      default:
+        return null;
     }
   }
 
   /**
-   * Get active collaterals for a given project (status: true).
-   * If a project has its own collaterals in ProjectCollateral table, ONLY the active ones (status === true)
-   * for that project are displayed. It will NOT fall back to global collaterals.
+   * Ensure default master collaterals exist in database.
    */
-  public async getActiveCollateralsForProject(projectId?: string): Promise<CollateralItem[]> {
+  public async ensureDefaultCollaterals(): Promise<void> {
+    for (const item of DEFAULT_COLLATERALS) {
+      const existing = await prisma.projectCollateral.findFirst({
+        where: {
+          platterId: null,
+          projectId: null,
+          code: item.code,
+        },
+      });
+
+      if (!existing) {
+        await prisma.projectCollateral.create({
+          data: {
+            platterId: null,
+            projectId: null,
+            code: item.code,
+            title: item.title,
+            subtitle: item.subtitle,
+            icon: item.icon,
+            fileType: item.fileType,
+            content: null,
+            seq: item.seq,
+            status: item.status,
+          },
+        });
+      }
+    }
+  }
+
+  /**
+   * Initializes default set of collaterals for a specific platter with attached media files.
+   */
+  public async ensurePlatterCollaterals(platterId: string): Promise<void> {
+    const platter = await prisma.platter.findUnique({ where: { id: platterId } });
+    const slug = platter?.slug || '';
+
+    for (const item of DEFAULT_COLLATERALS) {
+      const fileUrl = this.getDefaultFileForPlatter(slug, item.code);
+
+      const existing = await prisma.projectCollateral.findFirst({
+        where: {
+          platterId,
+          code: item.code,
+        },
+      });
+
+      if (!existing) {
+        await prisma.projectCollateral.create({
+          data: {
+            platterId,
+            code: item.code,
+            title: item.title,
+            subtitle: item.subtitle,
+            icon: item.icon,
+            fileType: item.fileType,
+            fileUrl,
+            content: null,
+            seq: item.seq,
+            status: item.status,
+          },
+        });
+      } else if ((!existing.fileUrl || existing.fileUrl !== fileUrl) && fileUrl) {
+        await prisma.projectCollateral.update({
+          where: { id: existing.id },
+          data: { fileUrl },
+        });
+      }
+    }
+  }
+
+  /**
+   * Get active collaterals for a given platter (status: true).
+   */
+  public async getActiveCollateralsForPlatter(platterId?: string): Promise<CollateralItem[]> {
+    if (platterId) {
+      await this.ensurePlatterCollaterals(platterId);
+
+      const platterCollaterals = await prisma.projectCollateral.findMany({
+        where: {
+          platterId,
+          status: true,
+        },
+        orderBy: { seq: "asc" },
+      });
+
+      if (platterCollaterals.length > 0) {
+        return platterCollaterals as CollateralItem[];
+      }
+    }
+
     await this.ensureDefaultCollaterals();
 
-    // 1. Check if there are project-specific collaterals defined in database
+    const masterCollaterals = await prisma.projectCollateral.findMany({
+      where: {
+        platterId: null,
+        status: true,
+      },
+      orderBy: { seq: "asc" },
+    });
+
+    return masterCollaterals as CollateralItem[];
+  }
+
+  /**
+   * Configure specific collaterals active for a platter.
+   */
+  public async configurePlatterCollaterals(
+    platterId: string,
+    activeCodes: string[]
+  ): Promise<CollateralItem[]> {
+    await this.ensurePlatterCollaterals(platterId);
+
+    const upperCodes = activeCodes.map((c) => c.toUpperCase());
+
+    await prisma.projectCollateral.updateMany({
+      where: { platterId },
+      data: { status: false },
+    });
+
+    await prisma.projectCollateral.updateMany({
+      where: {
+        platterId,
+        code: { in: upperCodes },
+      },
+      data: { status: true },
+    });
+
+    return prisma.projectCollateral.findMany({
+      where: { platterId },
+      orderBy: { seq: "asc" },
+    }) as any;
+  }
+
+  /**
+   * Get active collaterals for a given project (status: true).
+   */
+  public async getActiveCollateralsForProject(projectId?: string): Promise<CollateralItem[]> {
     if (projectId) {
       const projectCollateralCount = await prisma.projectCollateral.count({
         where: { projectId },
       });
 
       if (projectCollateralCount > 0) {
-        // Project has its own collaterals configured by admin.
-        // Return ONLY the collaterals where status === true for this project.
         return prisma.projectCollateral.findMany({
           where: {
             projectId,
             status: true,
           },
           orderBy: { seq: "asc" },
-        });
+        }) as any;
       }
     }
 
-    // 2. Fall back to global master active collaterals only if this project has no records at all
-    const masterCollaterals = await prisma.projectCollateral.findMany({
-      where: {
-        projectId: null,
-        status: true,
-      },
-      orderBy: { seq: "asc" },
-    });
-
-    return masterCollaterals;
+    return this.getActiveCollateralsForPlatter();
   }
 
   /**
-   * Initializes default set of collaterals specifically for a project so admin can customize them.
+   * Initializes default set of collaterals specifically for a project.
    */
   public async ensureProjectCollaterals(projectId: string): Promise<void> {
-    const count = await prisma.projectCollateral.count({
-      where: { projectId },
-    });
-
-    if (count === 0) {
-      await prisma.projectCollateral.createMany({
-        data: [
-          {
-            projectId,
-            code: "BROCHURE",
-            title: "Official PDF Brochure",
-            subtitle: "(Personalized with your Name, Firm & RERA)",
-            icon: "📄",
-            fileType: FileType.document,
-            seq: 1,
-            status: true,
-          },
-          {
-            projectId,
-            code: "GALLERY",
-            title: "High-Res 3D Creatives & Gallery",
-            subtitle: "(Watermarked with your Firm Details)",
-            icon: "🖼️",
-            fileType: FileType.image,
-            seq: 2,
-            status: true,
-          },
-          {
-            projectId,
-            code: "FACTSHEET",
-            title: "Project Factsheet & Specifications",
-            subtitle: "(Amenities, Layouts & Pricing)",
-            icon: "📑",
-            fileType: FileType.document,
-            seq: 3,
-            status: true,
-          },
-          {
-            projectId,
-            code: "FLOOR_PLAN",
-            title: "Master Layout & Floor Plans",
-            subtitle: "(Unit configurations & tower maps)",
-            icon: "📐",
-            fileType: FileType.document,
-            seq: 4,
-            status: true,
-          },
-          {
-            projectId,
-            code: "PAYMENT_PLAN",
-            title: "Payment Plan & Commercial Terms",
-            subtitle: "(Construction linked & flexible plans)",
-            icon: "💰",
-            fileType: FileType.document,
-            seq: 5,
-            status: true,
-          },
-          {
-            projectId,
-            code: "LOCATION_MAP",
-            title: "Location Map & Connectivity",
-            subtitle: "(Expressway & Metro proximity highlights)",
-            icon: "🗺️",
-            fileType: FileType.image,
-            seq: 6,
-            status: true,
-          },
-        ],
+    for (const item of DEFAULT_COLLATERALS) {
+      const existing = await prisma.projectCollateral.findFirst({
+        where: {
+          projectId,
+          code: item.code,
+        },
       });
+
+      if (!existing) {
+        await prisma.projectCollateral.create({
+          data: {
+            projectId,
+            code: item.code,
+            title: item.title,
+            subtitle: item.subtitle,
+            icon: item.icon,
+            fileType: item.fileType,
+            content: null,
+            seq: item.seq,
+            status: item.status,
+          },
+        });
+      }
     }
   }
 
   /**
    * Configure specific collaterals active for a project.
-   * Only the specified codes will have status: true; all others will have status: false!
-   * e.g. activeCodes: ["FLOOR_PLAN", "GALLERY"]
    */
   public async configureProjectCollaterals(
     projectId: string,
@@ -212,13 +306,11 @@ export class CollateralService {
 
     const upperCodes = activeCodes.map((c) => c.toUpperCase());
 
-    // 1. Deactivate all collaterals for this project
     await prisma.projectCollateral.updateMany({
       where: { projectId },
       data: { status: false },
     });
 
-    // 2. Activate only the specified codes
     await prisma.projectCollateral.updateMany({
       where: {
         projectId,
@@ -237,6 +329,7 @@ export class CollateralService {
    * List all collaterals with optional filters.
    */
   public async getAllCollaterals(filter?: {
+    platterId?: string;
     projectId?: string;
     status?: boolean;
     code?: string;
@@ -244,6 +337,9 @@ export class CollateralService {
     await this.ensureDefaultCollaterals();
 
     const where: any = {};
+    if (filter?.platterId !== undefined) {
+      where.platterId = filter.platterId === "null" ? null : filter.platterId;
+    }
     if (filter?.projectId !== undefined) {
       where.projectId = filter.projectId === "null" ? null : filter.projectId;
     }
@@ -256,8 +352,15 @@ export class CollateralService {
 
     return prisma.projectCollateral.findMany({
       where,
-      orderBy: [{ projectId: "asc" }, { seq: "asc" }],
+      orderBy: [{ seq: "asc" }],
       include: {
+        platter: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
         project: {
           select: {
             id: true,
@@ -276,6 +379,7 @@ export class CollateralService {
     return prisma.projectCollateral.findUnique({
       where: { id },
       include: {
+        platter: true,
         project: true,
       },
     }) as any;
@@ -285,6 +389,7 @@ export class CollateralService {
    * Create a new collateral item.
    */
   public async createCollateral(data: {
+    platterId?: string | null;
     projectId?: string | null;
     code?: string;
     title: string;
@@ -298,6 +403,7 @@ export class CollateralService {
   }): Promise<CollateralItem> {
     return prisma.projectCollateral.create({
       data: {
+        platterId: data.platterId || null,
         projectId: data.projectId || null,
         code: (data.code || "CUSTOM").toUpperCase(),
         title: data.title,
@@ -318,6 +424,7 @@ export class CollateralService {
   public async updateCollateral(
     id: string,
     data: {
+      platterId?: string | null;
       projectId?: string | null;
       code?: string;
       title?: string;
@@ -333,6 +440,7 @@ export class CollateralService {
     return prisma.projectCollateral.update({
       where: { id },
       data: {
+        ...(data.platterId !== undefined && { platterId: data.platterId }),
         ...(data.projectId !== undefined && { projectId: data.projectId }),
         ...(data.code && { code: data.code.toUpperCase() }),
         ...(data.title && { title: data.title }),

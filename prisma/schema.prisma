@@ -34,7 +34,8 @@ model Platter {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  projects Projects[]
+  projects    Projects[]
+  collaterals ProjectCollateral[]
 
   @@index([slug, status])
 }
@@ -83,36 +84,11 @@ model Projects {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  projectAmenities   ProjectAmenities[]
-  projectGallery     ProjectGallery[]
   projectReras       ProjectRera[]
   projectCollaterals ProjectCollateral[]
   projectEnquiries   projectEnquiry[]
 
   @@index([slug, projectName, status, platterId])
-}
-
-model ProjectAmenities {
-  id        String   @id @default(cuid())
-  projectId String
-  project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  title     String
-  seq       Int      @default(0)
-  createdAt DateTime @default(now())
-}
-
-model ProjectGallery {
-  id        String   @id @default(cuid())
-  projectId String
-  project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  title     String? // Title for collateral e.g. "Elevation", "Floor Plan", "Brochure"
-  fileType  FileType @default(image)
-  link      String // Image or Document file path / URL
-  alt       String?
-  seq       Int      @default(0)
-  createdAt DateTime @default(now())
-
-  @@index([projectId, fileType])
 }
 
 model ProjectRera {
@@ -126,12 +102,14 @@ model ProjectRera {
 
 model ProjectCollateral {
   id        String    @id @default(cuid())
+  platterId String?
+  platter   Platter?  @relation(fields: [platterId], references: [id], onDelete: Cascade)
   projectId String?
   project   Projects? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  code      String    @default("CUSTOM") // "BROCHURE", "GALLERY", "FACTSHEET", "FLOOR_PLAN", "PAYMENT_PLAN", "LOCATION_MAP", "CUSTOM"
-  title     String // "Official PDF Brochure", "High-Res 3D Creatives & Gallery", etc.
-  subtitle  String? // "(Personalized with your Name, Firm & RERA)"
-  icon      String?   @default("📄") // Emoji icon e.g. "📄", "🖼️", "📑", "📐", "💰", "🗺️"
+  code      String    @default("CUSTOM") // "STORY", "EDM", "VIDEO", "BROCHURE", "FLOOR_PLAN", "OPP_DOC", "CUSTOM"
+  title     String // "Whatsapp Story", "Whatsapp EDM", etc.
+  subtitle  String? // "(Personalized)"
+  icon      String?   @default("📄") // Emoji icon e.g. "📱", "✨", "🎥", "📄", "📐", "📑"
   fileType  FileType  @default(document) // image, video, link, document
   fileUrl   String? // File path or URL
   content   String?   @db.Text // Text content / details for factsheet, specifications, or notes
@@ -140,6 +118,7 @@ model ProjectCollateral {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  @@index([platterId, status, seq])
   @@index([projectId, status, seq])
 }
 

@@ -305,8 +305,6 @@ export type ProjectsWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Projects"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Projects"> | Date | string
   platter?: Prisma.XOR<Prisma.PlatterNullableScalarRelationFilter, Prisma.PlatterWhereInput> | null
-  projectAmenities?: Prisma.ProjectAmenitiesListRelationFilter
-  projectGallery?: Prisma.ProjectGalleryListRelationFilter
   projectReras?: Prisma.ProjectReraListRelationFilter
   projectCollaterals?: Prisma.ProjectCollateralListRelationFilter
   projectEnquiries?: Prisma.ProjectEnquiryListRelationFilter
@@ -330,8 +328,6 @@ export type ProjectsOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   platter?: Prisma.PlatterOrderByWithRelationInput
-  projectAmenities?: Prisma.ProjectAmenitiesOrderByRelationAggregateInput
-  projectGallery?: Prisma.ProjectGalleryOrderByRelationAggregateInput
   projectReras?: Prisma.ProjectReraOrderByRelationAggregateInput
   projectCollaterals?: Prisma.ProjectCollateralOrderByRelationAggregateInput
   projectEnquiries?: Prisma.projectEnquiryOrderByRelationAggregateInput
@@ -358,8 +354,6 @@ export type ProjectsWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Projects"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Projects"> | Date | string
   platter?: Prisma.XOR<Prisma.PlatterNullableScalarRelationFilter, Prisma.PlatterWhereInput> | null
-  projectAmenities?: Prisma.ProjectAmenitiesListRelationFilter
-  projectGallery?: Prisma.ProjectGalleryListRelationFilter
   projectReras?: Prisma.ProjectReraListRelationFilter
   projectCollaterals?: Prisma.ProjectCollateralListRelationFilter
   projectEnquiries?: Prisma.ProjectEnquiryListRelationFilter
@@ -428,8 +422,6 @@ export type ProjectsCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   platter?: Prisma.PlatterCreateNestedOneWithoutProjectsInput
-  projectAmenities?: Prisma.ProjectAmenitiesCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryCreateNestedManyWithoutProjectInput
   projectReras?: Prisma.ProjectReraCreateNestedManyWithoutProjectInput
   projectCollaterals?: Prisma.ProjectCollateralCreateNestedManyWithoutProjectInput
   projectEnquiries?: Prisma.projectEnquiryCreateNestedManyWithoutProjectsInput
@@ -452,8 +444,6 @@ export type ProjectsUncheckedCreateInput = {
   seq?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedCreateNestedManyWithoutProjectInput
   projectReras?: Prisma.ProjectReraUncheckedCreateNestedManyWithoutProjectInput
   projectCollaterals?: Prisma.ProjectCollateralUncheckedCreateNestedManyWithoutProjectInput
   projectEnquiries?: Prisma.projectEnquiryUncheckedCreateNestedManyWithoutProjectsInput
@@ -476,8 +466,6 @@ export type ProjectsUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   platter?: Prisma.PlatterUpdateOneWithoutProjectsNestedInput
-  projectAmenities?: Prisma.ProjectAmenitiesUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUpdateManyWithoutProjectNestedInput
   projectReras?: Prisma.ProjectReraUpdateManyWithoutProjectNestedInput
   projectCollaterals?: Prisma.ProjectCollateralUpdateManyWithoutProjectNestedInput
   projectEnquiries?: Prisma.projectEnquiryUpdateManyWithoutProjectsNestedInput
@@ -500,8 +488,6 @@ export type ProjectsUncheckedUpdateInput = {
   seq?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedUpdateManyWithoutProjectNestedInput
   projectReras?: Prisma.ProjectReraUncheckedUpdateManyWithoutProjectNestedInput
   projectCollaterals?: Prisma.ProjectCollateralUncheckedUpdateManyWithoutProjectNestedInput
   projectEnquiries?: Prisma.projectEnquiryUncheckedUpdateManyWithoutProjectsNestedInput
@@ -698,34 +684,6 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type ProjectsCreateNestedOneWithoutProjectAmenitiesInput = {
-  create?: Prisma.XOR<Prisma.ProjectsCreateWithoutProjectAmenitiesInput, Prisma.ProjectsUncheckedCreateWithoutProjectAmenitiesInput>
-  connectOrCreate?: Prisma.ProjectsCreateOrConnectWithoutProjectAmenitiesInput
-  connect?: Prisma.ProjectsWhereUniqueInput
-}
-
-export type ProjectsUpdateOneRequiredWithoutProjectAmenitiesNestedInput = {
-  create?: Prisma.XOR<Prisma.ProjectsCreateWithoutProjectAmenitiesInput, Prisma.ProjectsUncheckedCreateWithoutProjectAmenitiesInput>
-  connectOrCreate?: Prisma.ProjectsCreateOrConnectWithoutProjectAmenitiesInput
-  upsert?: Prisma.ProjectsUpsertWithoutProjectAmenitiesInput
-  connect?: Prisma.ProjectsWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectsUpdateToOneWithWhereWithoutProjectAmenitiesInput, Prisma.ProjectsUpdateWithoutProjectAmenitiesInput>, Prisma.ProjectsUncheckedUpdateWithoutProjectAmenitiesInput>
-}
-
-export type ProjectsCreateNestedOneWithoutProjectGalleryInput = {
-  create?: Prisma.XOR<Prisma.ProjectsCreateWithoutProjectGalleryInput, Prisma.ProjectsUncheckedCreateWithoutProjectGalleryInput>
-  connectOrCreate?: Prisma.ProjectsCreateOrConnectWithoutProjectGalleryInput
-  connect?: Prisma.ProjectsWhereUniqueInput
-}
-
-export type ProjectsUpdateOneRequiredWithoutProjectGalleryNestedInput = {
-  create?: Prisma.XOR<Prisma.ProjectsCreateWithoutProjectGalleryInput, Prisma.ProjectsUncheckedCreateWithoutProjectGalleryInput>
-  connectOrCreate?: Prisma.ProjectsCreateOrConnectWithoutProjectGalleryInput
-  upsert?: Prisma.ProjectsUpsertWithoutProjectGalleryInput
-  connect?: Prisma.ProjectsWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectsUpdateToOneWithWhereWithoutProjectGalleryInput, Prisma.ProjectsUpdateWithoutProjectGalleryInput>, Prisma.ProjectsUncheckedUpdateWithoutProjectGalleryInput>
-}
-
 export type ProjectsCreateNestedOneWithoutProjectRerasInput = {
   create?: Prisma.XOR<Prisma.ProjectsCreateWithoutProjectRerasInput, Prisma.ProjectsUncheckedCreateWithoutProjectRerasInput>
   connectOrCreate?: Prisma.ProjectsCreateOrConnectWithoutProjectRerasInput
@@ -788,8 +746,6 @@ export type ProjectsCreateWithoutPlatterInput = {
   seq?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryCreateNestedManyWithoutProjectInput
   projectReras?: Prisma.ProjectReraCreateNestedManyWithoutProjectInput
   projectCollaterals?: Prisma.ProjectCollateralCreateNestedManyWithoutProjectInput
   projectEnquiries?: Prisma.projectEnquiryCreateNestedManyWithoutProjectsInput
@@ -811,8 +767,6 @@ export type ProjectsUncheckedCreateWithoutPlatterInput = {
   seq?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedCreateNestedManyWithoutProjectInput
   projectReras?: Prisma.ProjectReraUncheckedCreateNestedManyWithoutProjectInput
   projectCollaterals?: Prisma.ProjectCollateralUncheckedCreateNestedManyWithoutProjectInput
   projectEnquiries?: Prisma.projectEnquiryUncheckedCreateNestedManyWithoutProjectsInput
@@ -866,222 +820,6 @@ export type ProjectsScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Projects"> | Date | string
 }
 
-export type ProjectsCreateWithoutProjectAmenitiesInput = {
-  id?: string
-  slug: string
-  projectName: string
-  location?: string | null
-  shortDescription?: string | null
-  tagline?: string | null
-  priceRange?: string | null
-  price?: number | null
-  brochure?: string | null
-  status?: boolean
-  hasDocuments?: boolean
-  otherDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  seq?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  platter?: Prisma.PlatterCreateNestedOneWithoutProjectsInput
-  projectGallery?: Prisma.ProjectGalleryCreateNestedManyWithoutProjectInput
-  projectReras?: Prisma.ProjectReraCreateNestedManyWithoutProjectInput
-  projectCollaterals?: Prisma.ProjectCollateralCreateNestedManyWithoutProjectInput
-  projectEnquiries?: Prisma.projectEnquiryCreateNestedManyWithoutProjectsInput
-}
-
-export type ProjectsUncheckedCreateWithoutProjectAmenitiesInput = {
-  id?: string
-  slug: string
-  projectName: string
-  platterId?: string | null
-  location?: string | null
-  shortDescription?: string | null
-  tagline?: string | null
-  priceRange?: string | null
-  price?: number | null
-  brochure?: string | null
-  status?: boolean
-  hasDocuments?: boolean
-  otherDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  seq?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  projectGallery?: Prisma.ProjectGalleryUncheckedCreateNestedManyWithoutProjectInput
-  projectReras?: Prisma.ProjectReraUncheckedCreateNestedManyWithoutProjectInput
-  projectCollaterals?: Prisma.ProjectCollateralUncheckedCreateNestedManyWithoutProjectInput
-  projectEnquiries?: Prisma.projectEnquiryUncheckedCreateNestedManyWithoutProjectsInput
-}
-
-export type ProjectsCreateOrConnectWithoutProjectAmenitiesInput = {
-  where: Prisma.ProjectsWhereUniqueInput
-  create: Prisma.XOR<Prisma.ProjectsCreateWithoutProjectAmenitiesInput, Prisma.ProjectsUncheckedCreateWithoutProjectAmenitiesInput>
-}
-
-export type ProjectsUpsertWithoutProjectAmenitiesInput = {
-  update: Prisma.XOR<Prisma.ProjectsUpdateWithoutProjectAmenitiesInput, Prisma.ProjectsUncheckedUpdateWithoutProjectAmenitiesInput>
-  create: Prisma.XOR<Prisma.ProjectsCreateWithoutProjectAmenitiesInput, Prisma.ProjectsUncheckedCreateWithoutProjectAmenitiesInput>
-  where?: Prisma.ProjectsWhereInput
-}
-
-export type ProjectsUpdateToOneWithWhereWithoutProjectAmenitiesInput = {
-  where?: Prisma.ProjectsWhereInput
-  data: Prisma.XOR<Prisma.ProjectsUpdateWithoutProjectAmenitiesInput, Prisma.ProjectsUncheckedUpdateWithoutProjectAmenitiesInput>
-}
-
-export type ProjectsUpdateWithoutProjectAmenitiesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  projectName?: Prisma.StringFieldUpdateOperationsInput | string
-  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  shortDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  priceRange?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  brochure?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hasDocuments?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  otherDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  seq?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  platter?: Prisma.PlatterUpdateOneWithoutProjectsNestedInput
-  projectGallery?: Prisma.ProjectGalleryUpdateManyWithoutProjectNestedInput
-  projectReras?: Prisma.ProjectReraUpdateManyWithoutProjectNestedInput
-  projectCollaterals?: Prisma.ProjectCollateralUpdateManyWithoutProjectNestedInput
-  projectEnquiries?: Prisma.projectEnquiryUpdateManyWithoutProjectsNestedInput
-}
-
-export type ProjectsUncheckedUpdateWithoutProjectAmenitiesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  projectName?: Prisma.StringFieldUpdateOperationsInput | string
-  platterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  shortDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  priceRange?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  brochure?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hasDocuments?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  otherDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  seq?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  projectGallery?: Prisma.ProjectGalleryUncheckedUpdateManyWithoutProjectNestedInput
-  projectReras?: Prisma.ProjectReraUncheckedUpdateManyWithoutProjectNestedInput
-  projectCollaterals?: Prisma.ProjectCollateralUncheckedUpdateManyWithoutProjectNestedInput
-  projectEnquiries?: Prisma.projectEnquiryUncheckedUpdateManyWithoutProjectsNestedInput
-}
-
-export type ProjectsCreateWithoutProjectGalleryInput = {
-  id?: string
-  slug: string
-  projectName: string
-  location?: string | null
-  shortDescription?: string | null
-  tagline?: string | null
-  priceRange?: string | null
-  price?: number | null
-  brochure?: string | null
-  status?: boolean
-  hasDocuments?: boolean
-  otherDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  seq?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  platter?: Prisma.PlatterCreateNestedOneWithoutProjectsInput
-  projectAmenities?: Prisma.ProjectAmenitiesCreateNestedManyWithoutProjectInput
-  projectReras?: Prisma.ProjectReraCreateNestedManyWithoutProjectInput
-  projectCollaterals?: Prisma.ProjectCollateralCreateNestedManyWithoutProjectInput
-  projectEnquiries?: Prisma.projectEnquiryCreateNestedManyWithoutProjectsInput
-}
-
-export type ProjectsUncheckedCreateWithoutProjectGalleryInput = {
-  id?: string
-  slug: string
-  projectName: string
-  platterId?: string | null
-  location?: string | null
-  shortDescription?: string | null
-  tagline?: string | null
-  priceRange?: string | null
-  price?: number | null
-  brochure?: string | null
-  status?: boolean
-  hasDocuments?: boolean
-  otherDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  seq?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedCreateNestedManyWithoutProjectInput
-  projectReras?: Prisma.ProjectReraUncheckedCreateNestedManyWithoutProjectInput
-  projectCollaterals?: Prisma.ProjectCollateralUncheckedCreateNestedManyWithoutProjectInput
-  projectEnquiries?: Prisma.projectEnquiryUncheckedCreateNestedManyWithoutProjectsInput
-}
-
-export type ProjectsCreateOrConnectWithoutProjectGalleryInput = {
-  where: Prisma.ProjectsWhereUniqueInput
-  create: Prisma.XOR<Prisma.ProjectsCreateWithoutProjectGalleryInput, Prisma.ProjectsUncheckedCreateWithoutProjectGalleryInput>
-}
-
-export type ProjectsUpsertWithoutProjectGalleryInput = {
-  update: Prisma.XOR<Prisma.ProjectsUpdateWithoutProjectGalleryInput, Prisma.ProjectsUncheckedUpdateWithoutProjectGalleryInput>
-  create: Prisma.XOR<Prisma.ProjectsCreateWithoutProjectGalleryInput, Prisma.ProjectsUncheckedCreateWithoutProjectGalleryInput>
-  where?: Prisma.ProjectsWhereInput
-}
-
-export type ProjectsUpdateToOneWithWhereWithoutProjectGalleryInput = {
-  where?: Prisma.ProjectsWhereInput
-  data: Prisma.XOR<Prisma.ProjectsUpdateWithoutProjectGalleryInput, Prisma.ProjectsUncheckedUpdateWithoutProjectGalleryInput>
-}
-
-export type ProjectsUpdateWithoutProjectGalleryInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  projectName?: Prisma.StringFieldUpdateOperationsInput | string
-  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  shortDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  priceRange?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  brochure?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hasDocuments?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  otherDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  seq?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  platter?: Prisma.PlatterUpdateOneWithoutProjectsNestedInput
-  projectAmenities?: Prisma.ProjectAmenitiesUpdateManyWithoutProjectNestedInput
-  projectReras?: Prisma.ProjectReraUpdateManyWithoutProjectNestedInput
-  projectCollaterals?: Prisma.ProjectCollateralUpdateManyWithoutProjectNestedInput
-  projectEnquiries?: Prisma.projectEnquiryUpdateManyWithoutProjectsNestedInput
-}
-
-export type ProjectsUncheckedUpdateWithoutProjectGalleryInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  projectName?: Prisma.StringFieldUpdateOperationsInput | string
-  platterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  shortDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  priceRange?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  brochure?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hasDocuments?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  otherDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  seq?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedUpdateManyWithoutProjectNestedInput
-  projectReras?: Prisma.ProjectReraUncheckedUpdateManyWithoutProjectNestedInput
-  projectCollaterals?: Prisma.ProjectCollateralUncheckedUpdateManyWithoutProjectNestedInput
-  projectEnquiries?: Prisma.projectEnquiryUncheckedUpdateManyWithoutProjectsNestedInput
-}
-
 export type ProjectsCreateWithoutProjectRerasInput = {
   id?: string
   slug: string
@@ -1099,8 +837,6 @@ export type ProjectsCreateWithoutProjectRerasInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   platter?: Prisma.PlatterCreateNestedOneWithoutProjectsInput
-  projectAmenities?: Prisma.ProjectAmenitiesCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryCreateNestedManyWithoutProjectInput
   projectCollaterals?: Prisma.ProjectCollateralCreateNestedManyWithoutProjectInput
   projectEnquiries?: Prisma.projectEnquiryCreateNestedManyWithoutProjectsInput
 }
@@ -1122,8 +858,6 @@ export type ProjectsUncheckedCreateWithoutProjectRerasInput = {
   seq?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedCreateNestedManyWithoutProjectInput
   projectCollaterals?: Prisma.ProjectCollateralUncheckedCreateNestedManyWithoutProjectInput
   projectEnquiries?: Prisma.projectEnquiryUncheckedCreateNestedManyWithoutProjectsInput
 }
@@ -1161,8 +895,6 @@ export type ProjectsUpdateWithoutProjectRerasInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   platter?: Prisma.PlatterUpdateOneWithoutProjectsNestedInput
-  projectAmenities?: Prisma.ProjectAmenitiesUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUpdateManyWithoutProjectNestedInput
   projectCollaterals?: Prisma.ProjectCollateralUpdateManyWithoutProjectNestedInput
   projectEnquiries?: Prisma.projectEnquiryUpdateManyWithoutProjectsNestedInput
 }
@@ -1184,8 +916,6 @@ export type ProjectsUncheckedUpdateWithoutProjectRerasInput = {
   seq?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedUpdateManyWithoutProjectNestedInput
   projectCollaterals?: Prisma.ProjectCollateralUncheckedUpdateManyWithoutProjectNestedInput
   projectEnquiries?: Prisma.projectEnquiryUncheckedUpdateManyWithoutProjectsNestedInput
 }
@@ -1207,8 +937,6 @@ export type ProjectsCreateWithoutProjectCollateralsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   platter?: Prisma.PlatterCreateNestedOneWithoutProjectsInput
-  projectAmenities?: Prisma.ProjectAmenitiesCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryCreateNestedManyWithoutProjectInput
   projectReras?: Prisma.ProjectReraCreateNestedManyWithoutProjectInput
   projectEnquiries?: Prisma.projectEnquiryCreateNestedManyWithoutProjectsInput
 }
@@ -1230,8 +958,6 @@ export type ProjectsUncheckedCreateWithoutProjectCollateralsInput = {
   seq?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedCreateNestedManyWithoutProjectInput
   projectReras?: Prisma.ProjectReraUncheckedCreateNestedManyWithoutProjectInput
   projectEnquiries?: Prisma.projectEnquiryUncheckedCreateNestedManyWithoutProjectsInput
 }
@@ -1269,8 +995,6 @@ export type ProjectsUpdateWithoutProjectCollateralsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   platter?: Prisma.PlatterUpdateOneWithoutProjectsNestedInput
-  projectAmenities?: Prisma.ProjectAmenitiesUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUpdateManyWithoutProjectNestedInput
   projectReras?: Prisma.ProjectReraUpdateManyWithoutProjectNestedInput
   projectEnquiries?: Prisma.projectEnquiryUpdateManyWithoutProjectsNestedInput
 }
@@ -1292,8 +1016,6 @@ export type ProjectsUncheckedUpdateWithoutProjectCollateralsInput = {
   seq?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedUpdateManyWithoutProjectNestedInput
   projectReras?: Prisma.ProjectReraUncheckedUpdateManyWithoutProjectNestedInput
   projectEnquiries?: Prisma.projectEnquiryUncheckedUpdateManyWithoutProjectsNestedInput
 }
@@ -1315,8 +1037,6 @@ export type ProjectsCreateWithoutProjectEnquiriesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   platter?: Prisma.PlatterCreateNestedOneWithoutProjectsInput
-  projectAmenities?: Prisma.ProjectAmenitiesCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryCreateNestedManyWithoutProjectInput
   projectReras?: Prisma.ProjectReraCreateNestedManyWithoutProjectInput
   projectCollaterals?: Prisma.ProjectCollateralCreateNestedManyWithoutProjectInput
 }
@@ -1338,8 +1058,6 @@ export type ProjectsUncheckedCreateWithoutProjectEnquiriesInput = {
   seq?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedCreateNestedManyWithoutProjectInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedCreateNestedManyWithoutProjectInput
   projectReras?: Prisma.ProjectReraUncheckedCreateNestedManyWithoutProjectInput
   projectCollaterals?: Prisma.ProjectCollateralUncheckedCreateNestedManyWithoutProjectInput
 }
@@ -1377,8 +1095,6 @@ export type ProjectsUpdateWithoutProjectEnquiriesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   platter?: Prisma.PlatterUpdateOneWithoutProjectsNestedInput
-  projectAmenities?: Prisma.ProjectAmenitiesUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUpdateManyWithoutProjectNestedInput
   projectReras?: Prisma.ProjectReraUpdateManyWithoutProjectNestedInput
   projectCollaterals?: Prisma.ProjectCollateralUpdateManyWithoutProjectNestedInput
 }
@@ -1400,8 +1116,6 @@ export type ProjectsUncheckedUpdateWithoutProjectEnquiriesInput = {
   seq?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedUpdateManyWithoutProjectNestedInput
   projectReras?: Prisma.ProjectReraUncheckedUpdateManyWithoutProjectNestedInput
   projectCollaterals?: Prisma.ProjectCollateralUncheckedUpdateManyWithoutProjectNestedInput
 }
@@ -1440,8 +1154,6 @@ export type ProjectsUpdateWithoutPlatterInput = {
   seq?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUpdateManyWithoutProjectNestedInput
   projectReras?: Prisma.ProjectReraUpdateManyWithoutProjectNestedInput
   projectCollaterals?: Prisma.ProjectCollateralUpdateManyWithoutProjectNestedInput
   projectEnquiries?: Prisma.projectEnquiryUpdateManyWithoutProjectsNestedInput
@@ -1463,8 +1175,6 @@ export type ProjectsUncheckedUpdateWithoutPlatterInput = {
   seq?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  projectAmenities?: Prisma.ProjectAmenitiesUncheckedUpdateManyWithoutProjectNestedInput
-  projectGallery?: Prisma.ProjectGalleryUncheckedUpdateManyWithoutProjectNestedInput
   projectReras?: Prisma.ProjectReraUncheckedUpdateManyWithoutProjectNestedInput
   projectCollaterals?: Prisma.ProjectCollateralUncheckedUpdateManyWithoutProjectNestedInput
   projectEnquiries?: Prisma.projectEnquiryUncheckedUpdateManyWithoutProjectsNestedInput
@@ -1494,16 +1204,12 @@ export type ProjectsUncheckedUpdateManyWithoutPlatterInput = {
  */
 
 export type ProjectsCountOutputType = {
-  projectAmenities: number
-  projectGallery: number
   projectReras: number
   projectCollaterals: number
   projectEnquiries: number
 }
 
 export type ProjectsCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  projectAmenities?: boolean | ProjectsCountOutputTypeCountProjectAmenitiesArgs
-  projectGallery?: boolean | ProjectsCountOutputTypeCountProjectGalleryArgs
   projectReras?: boolean | ProjectsCountOutputTypeCountProjectRerasArgs
   projectCollaterals?: boolean | ProjectsCountOutputTypeCountProjectCollateralsArgs
   projectEnquiries?: boolean | ProjectsCountOutputTypeCountProjectEnquiriesArgs
@@ -1517,20 +1223,6 @@ export type ProjectsCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ext
    * Select specific fields to fetch from the ProjectsCountOutputType
    */
   select?: Prisma.ProjectsCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * ProjectsCountOutputType without action
- */
-export type ProjectsCountOutputTypeCountProjectAmenitiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ProjectAmenitiesWhereInput
-}
-
-/**
- * ProjectsCountOutputType without action
- */
-export type ProjectsCountOutputTypeCountProjectGalleryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ProjectGalleryWhereInput
 }
 
 /**
@@ -1573,8 +1265,6 @@ export type ProjectsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   createdAt?: boolean
   updatedAt?: boolean
   platter?: boolean | Prisma.Projects$platterArgs<ExtArgs>
-  projectAmenities?: boolean | Prisma.Projects$projectAmenitiesArgs<ExtArgs>
-  projectGallery?: boolean | Prisma.Projects$projectGalleryArgs<ExtArgs>
   projectReras?: boolean | Prisma.Projects$projectRerasArgs<ExtArgs>
   projectCollaterals?: boolean | Prisma.Projects$projectCollateralsArgs<ExtArgs>
   projectEnquiries?: boolean | Prisma.Projects$projectEnquiriesArgs<ExtArgs>
@@ -1643,8 +1333,6 @@ export type ProjectsSelectScalar = {
 export type ProjectsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "projectName" | "platterId" | "location" | "shortDescription" | "tagline" | "priceRange" | "price" | "brochure" | "status" | "hasDocuments" | "otherDetails" | "seq" | "createdAt" | "updatedAt", ExtArgs["result"]["projects"]>
 export type ProjectsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   platter?: boolean | Prisma.Projects$platterArgs<ExtArgs>
-  projectAmenities?: boolean | Prisma.Projects$projectAmenitiesArgs<ExtArgs>
-  projectGallery?: boolean | Prisma.Projects$projectGalleryArgs<ExtArgs>
   projectReras?: boolean | Prisma.Projects$projectRerasArgs<ExtArgs>
   projectCollaterals?: boolean | Prisma.Projects$projectCollateralsArgs<ExtArgs>
   projectEnquiries?: boolean | Prisma.Projects$projectEnquiriesArgs<ExtArgs>
@@ -1661,8 +1349,6 @@ export type $ProjectsPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "Projects"
   objects: {
     platter: Prisma.$PlatterPayload<ExtArgs> | null
-    projectAmenities: Prisma.$ProjectAmenitiesPayload<ExtArgs>[]
-    projectGallery: Prisma.$ProjectGalleryPayload<ExtArgs>[]
     projectReras: Prisma.$ProjectReraPayload<ExtArgs>[]
     projectCollaterals: Prisma.$ProjectCollateralPayload<ExtArgs>[]
     projectEnquiries: Prisma.$projectEnquiryPayload<ExtArgs>[]
@@ -2079,8 +1765,6 @@ readonly fields: ProjectsFieldRefs;
 export interface Prisma__ProjectsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   platter<T extends Prisma.Projects$platterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Projects$platterArgs<ExtArgs>>): Prisma.Prisma__PlatterClient<runtime.Types.Result.GetResult<Prisma.$PlatterPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  projectAmenities<T extends Prisma.Projects$projectAmenitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Projects$projectAmenitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectAmenitiesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  projectGallery<T extends Prisma.Projects$projectGalleryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Projects$projectGalleryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectGalleryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   projectReras<T extends Prisma.Projects$projectRerasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Projects$projectRerasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectReraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   projectCollaterals<T extends Prisma.Projects$projectCollateralsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Projects$projectCollateralsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectCollateralPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   projectEnquiries<T extends Prisma.Projects$projectEnquiriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Projects$projectEnquiriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$projectEnquiryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2546,54 +2230,6 @@ export type Projects$platterArgs<ExtArgs extends runtime.Types.Extensions.Intern
    */
   include?: Prisma.PlatterInclude<ExtArgs> | null
   where?: Prisma.PlatterWhereInput
-}
-
-/**
- * Projects.projectAmenities
- */
-export type Projects$projectAmenitiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ProjectAmenities
-   */
-  select?: Prisma.ProjectAmenitiesSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ProjectAmenities
-   */
-  omit?: Prisma.ProjectAmenitiesOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ProjectAmenitiesInclude<ExtArgs> | null
-  where?: Prisma.ProjectAmenitiesWhereInput
-  orderBy?: Prisma.ProjectAmenitiesOrderByWithRelationInput | Prisma.ProjectAmenitiesOrderByWithRelationInput[]
-  cursor?: Prisma.ProjectAmenitiesWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ProjectAmenitiesScalarFieldEnum | Prisma.ProjectAmenitiesScalarFieldEnum[]
-}
-
-/**
- * Projects.projectGallery
- */
-export type Projects$projectGalleryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ProjectGallery
-   */
-  select?: Prisma.ProjectGallerySelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ProjectGallery
-   */
-  omit?: Prisma.ProjectGalleryOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ProjectGalleryInclude<ExtArgs> | null
-  where?: Prisma.ProjectGalleryWhereInput
-  orderBy?: Prisma.ProjectGalleryOrderByWithRelationInput | Prisma.ProjectGalleryOrderByWithRelationInput[]
-  cursor?: Prisma.ProjectGalleryWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ProjectGalleryScalarFieldEnum | Prisma.ProjectGalleryScalarFieldEnum[]
 }
 
 /**

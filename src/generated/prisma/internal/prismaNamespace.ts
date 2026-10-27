@@ -400,8 +400,6 @@ export const ModelName = {
   Platter: 'Platter',
   ChannelPartner: 'ChannelPartner',
   Projects: 'Projects',
-  ProjectAmenities: 'ProjectAmenities',
-  ProjectGallery: 'ProjectGallery',
   ProjectRera: 'ProjectRera',
   ProjectCollateral: 'ProjectCollateral',
   Faq: 'Faq',
@@ -424,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "platter" | "channelPartner" | "projects" | "projectAmenities" | "projectGallery" | "projectRera" | "projectCollateral" | "faq" | "chatbotSession" | "chatbotMessage" | "projectEnquiry" | "channelPartnerEnquiry"
+    modelProps: "platter" | "channelPartner" | "projects" | "projectRera" | "projectCollateral" | "faq" | "chatbotSession" | "chatbotMessage" | "projectEnquiry" | "channelPartnerEnquiry"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -647,154 +645,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ProjectsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ProjectsCountAggregateOutputType> | number
-        }
-      }
-    }
-    ProjectAmenities: {
-      payload: Prisma.$ProjectAmenitiesPayload<ExtArgs>
-      fields: Prisma.ProjectAmenitiesFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ProjectAmenitiesFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ProjectAmenitiesFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload>
-        }
-        findFirst: {
-          args: Prisma.ProjectAmenitiesFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ProjectAmenitiesFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload>
-        }
-        findMany: {
-          args: Prisma.ProjectAmenitiesFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload>[]
-        }
-        create: {
-          args: Prisma.ProjectAmenitiesCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload>
-        }
-        createMany: {
-          args: Prisma.ProjectAmenitiesCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ProjectAmenitiesCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload>[]
-        }
-        delete: {
-          args: Prisma.ProjectAmenitiesDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload>
-        }
-        update: {
-          args: Prisma.ProjectAmenitiesUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload>
-        }
-        deleteMany: {
-          args: Prisma.ProjectAmenitiesDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ProjectAmenitiesUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ProjectAmenitiesUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload>[]
-        }
-        upsert: {
-          args: Prisma.ProjectAmenitiesUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectAmenitiesPayload>
-        }
-        aggregate: {
-          args: Prisma.ProjectAmenitiesAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateProjectAmenities>
-        }
-        groupBy: {
-          args: Prisma.ProjectAmenitiesGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ProjectAmenitiesGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ProjectAmenitiesCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ProjectAmenitiesCountAggregateOutputType> | number
-        }
-      }
-    }
-    ProjectGallery: {
-      payload: Prisma.$ProjectGalleryPayload<ExtArgs>
-      fields: Prisma.ProjectGalleryFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ProjectGalleryFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ProjectGalleryFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload>
-        }
-        findFirst: {
-          args: Prisma.ProjectGalleryFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ProjectGalleryFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload>
-        }
-        findMany: {
-          args: Prisma.ProjectGalleryFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload>[]
-        }
-        create: {
-          args: Prisma.ProjectGalleryCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload>
-        }
-        createMany: {
-          args: Prisma.ProjectGalleryCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ProjectGalleryCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload>[]
-        }
-        delete: {
-          args: Prisma.ProjectGalleryDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload>
-        }
-        update: {
-          args: Prisma.ProjectGalleryUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload>
-        }
-        deleteMany: {
-          args: Prisma.ProjectGalleryDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ProjectGalleryUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ProjectGalleryUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload>[]
-        }
-        upsert: {
-          args: Prisma.ProjectGalleryUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectGalleryPayload>
-        }
-        aggregate: {
-          args: Prisma.ProjectGalleryAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateProjectGallery>
-        }
-        groupBy: {
-          args: Prisma.ProjectGalleryGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ProjectGalleryGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ProjectGalleryCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ProjectGalleryCountAggregateOutputType> | number
         }
       }
     }
@@ -1408,31 +1258,6 @@ export const ProjectsScalarFieldEnum = {
 export type ProjectsScalarFieldEnum = (typeof ProjectsScalarFieldEnum)[keyof typeof ProjectsScalarFieldEnum]
 
 
-export const ProjectAmenitiesScalarFieldEnum = {
-  id: 'id',
-  projectId: 'projectId',
-  title: 'title',
-  seq: 'seq',
-  createdAt: 'createdAt'
-} as const
-
-export type ProjectAmenitiesScalarFieldEnum = (typeof ProjectAmenitiesScalarFieldEnum)[keyof typeof ProjectAmenitiesScalarFieldEnum]
-
-
-export const ProjectGalleryScalarFieldEnum = {
-  id: 'id',
-  projectId: 'projectId',
-  title: 'title',
-  fileType: 'fileType',
-  link: 'link',
-  alt: 'alt',
-  seq: 'seq',
-  createdAt: 'createdAt'
-} as const
-
-export type ProjectGalleryScalarFieldEnum = (typeof ProjectGalleryScalarFieldEnum)[keyof typeof ProjectGalleryScalarFieldEnum]
-
-
 export const ProjectReraScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
@@ -1446,6 +1271,7 @@ export type ProjectReraScalarFieldEnum = (typeof ProjectReraScalarFieldEnum)[key
 
 export const ProjectCollateralScalarFieldEnum = {
   id: 'id',
+  platterId: 'platterId',
   projectId: 'projectId',
   code: 'code',
   title: 'title',
@@ -1838,8 +1664,6 @@ export type GlobalOmitConfig = {
   platter?: Prisma.PlatterOmit
   channelPartner?: Prisma.ChannelPartnerOmit
   projects?: Prisma.ProjectsOmit
-  projectAmenities?: Prisma.ProjectAmenitiesOmit
-  projectGallery?: Prisma.ProjectGalleryOmit
   projectRera?: Prisma.ProjectReraOmit
   projectCollateral?: Prisma.ProjectCollateralOmit
   faq?: Prisma.FaqOmit

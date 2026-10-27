@@ -18,10 +18,4 @@ router.post("/:id/documents", upload.single("file"), projectCtrl.setDocuments);
 router.put("/:id/set-document", upload.single("file"), projectCtrl.setDocuments);
 router.patch("/:id/documents", upload.single("file"), projectCtrl.setDocuments);
 
-// Gallery / Media collaterals (supports JSON or multipart file upload)
-router.get("/:projectId/gallery", projectCtrl.getGallery);
-router.post("/:projectId/gallery", upload.single("file"), projectCtrl.addGalleryItem);
-router.put("/gallery/:id", upload.single("file"), projectCtrl.updateGalleryItem);
-router.delete("/gallery/:id", projectCtrl.deleteGalleryItem);
-
 export { router as ProjectRoutes };

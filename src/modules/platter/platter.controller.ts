@@ -6,7 +6,10 @@ import { ApiError } from "../../utils/apiError.utils.js";
 
 export const getList = asyncHandler(async (req: Request, res: Response) => {
   const onlyActive = req.query.all !== "true";
-  const records = await platterService.getList(onlyActive);
+  const page = req.query.page ? Number(req.query.page) : (req.query.all === "true" ? undefined : 1);
+  const limit = req.query.limit ? Number(req.query.limit) : (req.query.all === "true" ? undefined : 10);
+
+  const records = await platterService.getList({ onlyActive, page, limit });
   successResponse(res, 200, "Platters fetched successfully", records);
 });
 

@@ -7,7 +7,10 @@ import { formatUploadedFile } from "../../middlewares/upload.middleware.js";
 
 export const getList = asyncHandler(async (req: Request, res: Response) => {
   const platterId = req.query.platterId as string | undefined;
-  const records = await projectService.getList(platterId);
+  const page = req.query.page ? Number(req.query.page) : (req.query.all === "true" ? undefined : 1);
+  const limit = req.query.limit ? Number(req.query.limit) : (req.query.all === "true" ? undefined : 10);
+
+  const records = await projectService.getList(platterId, page !== undefined ? { page, limit } : undefined);
   successResponse(res, 200, "Projects fetched successfully", records);
 });
 
@@ -35,43 +38,6 @@ export const destroy = asyncHandler(async (req: Request, res: Response) => {
   const id = String(req.params.id);
   const record = await projectService.destroy(id);
   successResponse(res, 200, "Project deleted successfully!", record);
-});
-
-export const getGallery = asyncHandler(async (req: Request, res: Response) => {
-  const projectId = String(req.params.projectId);
-  const records = await projectService.getGallery(projectId);
-  successResponse(res, 200, "Project gallery fetched successfully", records);
-});
-
-export const addGalleryItem = asyncHandler(async (req: Request, res: Response) => {
-  const projectId = String(req.params.projectId);
-  const data = { ...req.body };
-  if (req.file) {
-    const uploaded = formatUploadedFile(req.file);
-    data.link = uploaded.path;
-    if (!data.fileType) data.fileType = uploaded.fileType;
-    if (!data.title) data.title = req.file.originalname;
-  }
-  const record = await projectService.addGalleryItem(projectId, data);
-  successResponse(res, 201, "Gallery item added successfully!", record);
-});
-
-export const updateGalleryItem = asyncHandler(async (req: Request, res: Response) => {
-  const id = String(req.params.id);
-  const data = { ...req.body };
-  if (req.file) {
-    const uploaded = formatUploadedFile(req.file);
-    data.link = uploaded.path;
-    if (!data.fileType) data.fileType = uploaded.fileType;
-  }
-  const record = await projectService.updateGalleryItem(id, data);
-  successResponse(res, 200, "Gallery item updated successfully!", record);
-});
-
-export const deleteGalleryItem = asyncHandler(async (req: Request, res: Response) => {
-  const id = String(req.params.id);
-  const record = await projectService.deleteGalleryItem(id);
-  successResponse(res, 200, "Gallery item deleted successfully!", record);
 });
 
 export const setDocuments = asyncHandler(async (req: Request, res: Response) => {

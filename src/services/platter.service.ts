@@ -8,8 +8,9 @@ export interface PlatterWithProjects {
   description?: string | null;
   seq: number;
   status: boolean;
+  collaterals?: any[];
   projects?: any[];
-  _count?: { projects: number };
+  _count?: { projects: number; collaterals?: number };
 }
 
 export class PlatterService {
@@ -19,6 +20,10 @@ export class PlatterService {
       where,
       orderBy: { seq: "asc" },
       include: {
+        collaterals: {
+          where: { status: true },
+          orderBy: { seq: "asc" },
+        },
         projects: {
           where: { status: true },
           select: {
@@ -34,23 +39,24 @@ export class PlatterService {
           orderBy: { seq: "asc" },
         },
         _count: {
-          select: { projects: true },
+          select: { projects: true, collaterals: true },
         },
       },
     });
   }
 
   public async getPlatterById(id: string): Promise<PlatterWithProjects | null> {
-    return prisma.platter.findUnique({
-      where: { id },
+    return prisma.platter.findFirst({
+      where: {
+        OR: [{ id }, { slug: id }],
+      },
       include: {
+        collaterals: {
+          where: { status: true },
+          orderBy: { seq: "asc" },
+        },
         projects: {
           where: { status: true },
-          include: {
-            projectGallery: true,
-            projectReras: true,
-            projectAmenities: true,
-          },
           orderBy: { seq: "asc" },
         },
       },
@@ -61,12 +67,12 @@ export class PlatterService {
     return prisma.platter.findUnique({
       where: { slug },
       include: {
+        collaterals: {
+          where: { status: true },
+          orderBy: { seq: "asc" },
+        },
         projects: {
           where: { status: true },
-          include: {
-            projectGallery: true,
-            projectReras: true,
-          },
           orderBy: { seq: "asc" },
         },
       },
@@ -97,6 +103,9 @@ export class PlatterService {
         seq: data.seq ?? 0,
         status: data.status !== undefined ? data.status : true,
       },
+      include: {
+        collaterals: true,
+      },
     });
   }
 
@@ -114,6 +123,9 @@ export class PlatterService {
     return prisma.platter.update({
       where: { id },
       data,
+      include: {
+        collaterals: true,
+      },
     });
   }
 

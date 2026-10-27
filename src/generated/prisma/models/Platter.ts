@@ -249,6 +249,7 @@ export type PlatterWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Platter"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Platter"> | Date | string
   projects?: Prisma.ProjectsListRelationFilter
+  collaterals?: Prisma.ProjectCollateralListRelationFilter
 }
 
 export type PlatterOrderByWithRelationInput = {
@@ -262,6 +263,7 @@ export type PlatterOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projects?: Prisma.ProjectsOrderByRelationAggregateInput
+  collaterals?: Prisma.ProjectCollateralOrderByRelationAggregateInput
 }
 
 export type PlatterWhereUniqueInput = Prisma.AtLeast<{
@@ -278,6 +280,7 @@ export type PlatterWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Platter"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Platter"> | Date | string
   projects?: Prisma.ProjectsListRelationFilter
+  collaterals?: Prisma.ProjectCollateralListRelationFilter
 }, "id" | "slug" | "name">
 
 export type PlatterOrderByWithAggregationInput = {
@@ -323,6 +326,7 @@ export type PlatterCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectsCreateNestedManyWithoutPlatterInput
+  collaterals?: Prisma.ProjectCollateralCreateNestedManyWithoutPlatterInput
 }
 
 export type PlatterUncheckedCreateInput = {
@@ -336,6 +340,7 @@ export type PlatterUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectsUncheckedCreateNestedManyWithoutPlatterInput
+  collaterals?: Prisma.ProjectCollateralUncheckedCreateNestedManyWithoutPlatterInput
 }
 
 export type PlatterUpdateInput = {
@@ -349,6 +354,7 @@ export type PlatterUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectsUpdateManyWithoutPlatterNestedInput
+  collaterals?: Prisma.ProjectCollateralUpdateManyWithoutPlatterNestedInput
 }
 
 export type PlatterUncheckedUpdateInput = {
@@ -362,6 +368,7 @@ export type PlatterUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectsUncheckedUpdateManyWithoutPlatterNestedInput
+  collaterals?: Prisma.ProjectCollateralUncheckedUpdateManyWithoutPlatterNestedInput
 }
 
 export type PlatterCreateManyInput = {
@@ -489,6 +496,22 @@ export type PlatterUpdateOneWithoutProjectsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PlatterUpdateToOneWithWhereWithoutProjectsInput, Prisma.PlatterUpdateWithoutProjectsInput>, Prisma.PlatterUncheckedUpdateWithoutProjectsInput>
 }
 
+export type PlatterCreateNestedOneWithoutCollateralsInput = {
+  create?: Prisma.XOR<Prisma.PlatterCreateWithoutCollateralsInput, Prisma.PlatterUncheckedCreateWithoutCollateralsInput>
+  connectOrCreate?: Prisma.PlatterCreateOrConnectWithoutCollateralsInput
+  connect?: Prisma.PlatterWhereUniqueInput
+}
+
+export type PlatterUpdateOneWithoutCollateralsNestedInput = {
+  create?: Prisma.XOR<Prisma.PlatterCreateWithoutCollateralsInput, Prisma.PlatterUncheckedCreateWithoutCollateralsInput>
+  connectOrCreate?: Prisma.PlatterCreateOrConnectWithoutCollateralsInput
+  upsert?: Prisma.PlatterUpsertWithoutCollateralsInput
+  disconnect?: Prisma.PlatterWhereInput | boolean
+  delete?: Prisma.PlatterWhereInput | boolean
+  connect?: Prisma.PlatterWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PlatterUpdateToOneWithWhereWithoutCollateralsInput, Prisma.PlatterUpdateWithoutCollateralsInput>, Prisma.PlatterUncheckedUpdateWithoutCollateralsInput>
+}
+
 export type PlatterCreateWithoutProjectsInput = {
   id?: string
   slug: string
@@ -499,6 +522,7 @@ export type PlatterCreateWithoutProjectsInput = {
   status?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  collaterals?: Prisma.ProjectCollateralCreateNestedManyWithoutPlatterInput
 }
 
 export type PlatterUncheckedCreateWithoutProjectsInput = {
@@ -511,6 +535,7 @@ export type PlatterUncheckedCreateWithoutProjectsInput = {
   status?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  collaterals?: Prisma.ProjectCollateralUncheckedCreateNestedManyWithoutPlatterInput
 }
 
 export type PlatterCreateOrConnectWithoutProjectsInput = {
@@ -539,6 +564,7 @@ export type PlatterUpdateWithoutProjectsInput = {
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  collaterals?: Prisma.ProjectCollateralUpdateManyWithoutPlatterNestedInput
 }
 
 export type PlatterUncheckedUpdateWithoutProjectsInput = {
@@ -551,6 +577,75 @@ export type PlatterUncheckedUpdateWithoutProjectsInput = {
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  collaterals?: Prisma.ProjectCollateralUncheckedUpdateManyWithoutPlatterNestedInput
+}
+
+export type PlatterCreateWithoutCollateralsInput = {
+  id?: string
+  slug: string
+  name: string
+  tagline?: string | null
+  description?: string | null
+  seq?: number
+  status?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  projects?: Prisma.ProjectsCreateNestedManyWithoutPlatterInput
+}
+
+export type PlatterUncheckedCreateWithoutCollateralsInput = {
+  id?: string
+  slug: string
+  name: string
+  tagline?: string | null
+  description?: string | null
+  seq?: number
+  status?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  projects?: Prisma.ProjectsUncheckedCreateNestedManyWithoutPlatterInput
+}
+
+export type PlatterCreateOrConnectWithoutCollateralsInput = {
+  where: Prisma.PlatterWhereUniqueInput
+  create: Prisma.XOR<Prisma.PlatterCreateWithoutCollateralsInput, Prisma.PlatterUncheckedCreateWithoutCollateralsInput>
+}
+
+export type PlatterUpsertWithoutCollateralsInput = {
+  update: Prisma.XOR<Prisma.PlatterUpdateWithoutCollateralsInput, Prisma.PlatterUncheckedUpdateWithoutCollateralsInput>
+  create: Prisma.XOR<Prisma.PlatterCreateWithoutCollateralsInput, Prisma.PlatterUncheckedCreateWithoutCollateralsInput>
+  where?: Prisma.PlatterWhereInput
+}
+
+export type PlatterUpdateToOneWithWhereWithoutCollateralsInput = {
+  where?: Prisma.PlatterWhereInput
+  data: Prisma.XOR<Prisma.PlatterUpdateWithoutCollateralsInput, Prisma.PlatterUncheckedUpdateWithoutCollateralsInput>
+}
+
+export type PlatterUpdateWithoutCollateralsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seq?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projects?: Prisma.ProjectsUpdateManyWithoutPlatterNestedInput
+}
+
+export type PlatterUncheckedUpdateWithoutCollateralsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seq?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projects?: Prisma.ProjectsUncheckedUpdateManyWithoutPlatterNestedInput
 }
 
 
@@ -560,10 +655,12 @@ export type PlatterUncheckedUpdateWithoutProjectsInput = {
 
 export type PlatterCountOutputType = {
   projects: number
+  collaterals: number
 }
 
 export type PlatterCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   projects?: boolean | PlatterCountOutputTypeCountProjectsArgs
+  collaterals?: boolean | PlatterCountOutputTypeCountCollateralsArgs
 }
 
 /**
@@ -583,6 +680,13 @@ export type PlatterCountOutputTypeCountProjectsArgs<ExtArgs extends runtime.Type
   where?: Prisma.ProjectsWhereInput
 }
 
+/**
+ * PlatterCountOutputType without action
+ */
+export type PlatterCountOutputTypeCountCollateralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProjectCollateralWhereInput
+}
+
 
 export type PlatterSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -595,6 +699,7 @@ export type PlatterSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   createdAt?: boolean
   updatedAt?: boolean
   projects?: boolean | Prisma.Platter$projectsArgs<ExtArgs>
+  collaterals?: boolean | Prisma.Platter$collateralsArgs<ExtArgs>
   _count?: boolean | Prisma.PlatterCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["platter"]>
 
@@ -637,6 +742,7 @@ export type PlatterSelectScalar = {
 export type PlatterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "name" | "tagline" | "description" | "seq" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["platter"]>
 export type PlatterInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   projects?: boolean | Prisma.Platter$projectsArgs<ExtArgs>
+  collaterals?: boolean | Prisma.Platter$collateralsArgs<ExtArgs>
   _count?: boolean | Prisma.PlatterCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PlatterIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -646,6 +752,7 @@ export type $PlatterPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Platter"
   objects: {
     projects: Prisma.$ProjectsPayload<ExtArgs>[]
+    collaterals: Prisma.$ProjectCollateralPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1052,6 +1159,7 @@ readonly fields: PlatterFieldRefs;
 export interface Prisma__PlatterClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   projects<T extends Prisma.Platter$projectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Platter$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  collaterals<T extends Prisma.Platter$collateralsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Platter$collateralsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectCollateralPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1504,6 +1612,30 @@ export type Platter$projectsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.ProjectsScalarFieldEnum | Prisma.ProjectsScalarFieldEnum[]
+}
+
+/**
+ * Platter.collaterals
+ */
+export type Platter$collateralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProjectCollateral
+   */
+  select?: Prisma.ProjectCollateralSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProjectCollateral
+   */
+  omit?: Prisma.ProjectCollateralOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProjectCollateralInclude<ExtArgs> | null
+  where?: Prisma.ProjectCollateralWhereInput
+  orderBy?: Prisma.ProjectCollateralOrderByWithRelationInput | Prisma.ProjectCollateralOrderByWithRelationInput[]
+  cursor?: Prisma.ProjectCollateralWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProjectCollateralScalarFieldEnum | Prisma.ProjectCollateralScalarFieldEnum[]
 }
 
 /**

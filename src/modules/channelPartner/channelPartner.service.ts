@@ -1,7 +1,8 @@
 import { prisma } from "../../config/prisma.config.js";
 import { ICreateChannelPartner, IUpdateChannelPartner } from "./channelPartner.interface.js";
+import { paginate, PaginationParams } from "../../utils/pagination.utils.js";
 
-export const getList = async (search?: string) => {
+export const getList = async (search?: string, pagination?: PaginationParams) => {
   const where: any = {};
   if (search) {
     where.OR = [
@@ -12,10 +13,19 @@ export const getList = async (search?: string) => {
     ];
   }
 
-  return prisma.channelPartner.findMany({
+  const queryArgs = {
     where,
-    orderBy: { createdAt: "desc" },
-  });
+    orderBy: { createdAt: "desc" as const },
+  };
+
+  if (pagination && (pagination.page !== undefined || pagination.limit !== undefined)) {
+    return paginate(prisma.channelPartner, queryArgs, {
+      page: pagination.page || 1,
+      limit: pagination.limit || 10,
+    });
+  }
+
+  return prisma.channelPartner.findMany(queryArgs);
 };
 
 export const getById = async (idOrRera: string) => {
