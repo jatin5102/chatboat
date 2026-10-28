@@ -26,17 +26,21 @@ export class ProjectService {
 
   public resolvePath(relativePath?: string | null): string {
     if (!relativePath) return "";
-    if (path.isAbsolute(relativePath)) return relativePath;
+    const trimmed = relativePath.trim();
+    // Normalize leading slashes (e.g. /uploads/images/... -> uploads/images/...)
+    const normalized = trimmed.replace(/^[\\/]+/, "");
 
-    const direct = path.resolve(this.rootDir, relativePath);
+    const direct = path.resolve(this.rootDir, normalized);
     if (fs.existsSync(direct)) return direct;
 
+    if (path.isAbsolute(trimmed) && fs.existsSync(trimmed)) return trimmed;
+
     // Fallback search between assets/ and uploads/
-    if (relativePath.startsWith("assets/")) {
-      const alt = path.resolve(this.rootDir, relativePath.replace(/^assets\//, "uploads/"));
+    if (normalized.startsWith("assets/")) {
+      const alt = path.resolve(this.rootDir, normalized.replace(/^assets\//, "uploads/"));
       if (fs.existsSync(alt)) return alt;
-    } else if (relativePath.startsWith("uploads/")) {
-      const alt = path.resolve(this.rootDir, relativePath.replace(/^uploads\//, "assets/"));
+    } else if (normalized.startsWith("uploads/")) {
+      const alt = path.resolve(this.rootDir, normalized.replace(/^uploads\//, "assets/"));
       if (fs.existsSync(alt)) return alt;
     }
 

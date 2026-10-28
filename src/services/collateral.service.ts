@@ -1,6 +1,22 @@
 import { prisma } from "../config/prisma.config.js";
 import { FileType } from "../generated/prisma/enums.js";
 
+export interface CollateralMediaRecord {
+  id: string;
+  collateralId?: string | null;
+  title?: string | null;
+  originalName?: string | null;
+  fileName: string;
+  fileUrl: string;
+  fileType: FileType;
+  mimeType?: string | null;
+  fileSize?: number | null;
+  seq: number;
+  status: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface CollateralItem {
   id: string;
   platterId?: string | null;
@@ -14,6 +30,7 @@ export interface CollateralItem {
   content?: string | null;
   seq: number;
   status: boolean;
+  mediaItems?: CollateralMediaRecord[];
 }
 
 export const DEFAULT_COLLATERALS = [
@@ -191,6 +208,12 @@ export class CollateralService {
           platterId,
           status: true,
         },
+        include: {
+          mediaItems: {
+            where: { status: true },
+            orderBy: { seq: "asc" },
+          },
+        },
         orderBy: { seq: "asc" },
       });
 
@@ -205,6 +228,12 @@ export class CollateralService {
       where: {
         platterId: null,
         status: true,
+      },
+      include: {
+        mediaItems: {
+          where: { status: true },
+          orderBy: { seq: "asc" },
+        },
       },
       orderBy: { seq: "asc" },
     });
@@ -368,6 +397,9 @@ export class CollateralService {
             slug: true,
           },
         },
+        mediaItems: {
+          orderBy: { seq: "asc" },
+        },
       },
     }) as any;
   }
@@ -381,6 +413,9 @@ export class CollateralService {
       include: {
         platter: true,
         project: true,
+        mediaItems: {
+          orderBy: { seq: "asc" },
+        },
       },
     }) as any;
   }

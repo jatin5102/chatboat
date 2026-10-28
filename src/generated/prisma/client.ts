@@ -67,6 +67,11 @@ export type ProjectRera = Prisma.ProjectReraModel
  */
 export type ProjectCollateral = Prisma.ProjectCollateralModel
 /**
+ * Model CollateralMedia
+ * 
+ */
+export type CollateralMedia = Prisma.CollateralMediaModel
+/**
  * Model Faq
  * 
  */

@@ -12,6 +12,10 @@ import {
   configureProjectCollaterals,
   initProjectCollaterals,
   deleteCollateral,
+  getCollateralMedia,
+  addCollateralMedia,
+  removeCollateralMedia,
+  updateCollateralMedia,
 } from "./collateral.controller.js";
 import { upload } from "../../middlewares/upload.middleware.js";
 
@@ -19,6 +23,14 @@ const router = Router();
 
 router.get("/", getCollaterals);
 
+// Media Management per Collateral (Fetch, Upload/Add, Remove, Update)
+router.get("/:id/media", getCollateralMedia);
+router.post("/:id/media", upload.array("files", 15), addCollateralMedia);
+router.delete("/:id/media/:mediaId", removeCollateralMedia);
+router.delete("/media/:mediaId", removeCollateralMedia);
+router.patch("/:id/media/:mediaId", updateCollateralMedia);
+router.patch("/media/:mediaId", updateCollateralMedia);
+  
 // Platter-referenced collaterals
 router.get("/platter/:platterId", getActivePlatterCollaterals);
 router.post("/platter/:platterId/init", initPlatterCollaterals);
@@ -32,7 +44,7 @@ router.put("/project/:projectId/configure", configureProjectCollaterals);
 router.patch("/project/:projectId/configure", configureProjectCollaterals);
 
 router.get("/:id", getCollateralById);
-router.post("/",  createCollateral);
+router.post("/", createCollateral);
 router.put("/:id", updateCollateral);
 router.patch("/:id/status", toggleCollateralStatus);
 router.delete("/:id", deleteCollateral);

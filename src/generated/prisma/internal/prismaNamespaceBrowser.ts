@@ -56,6 +56,7 @@ export const ModelName = {
   Projects: 'Projects',
   ProjectRera: 'ProjectRera',
   ProjectCollateral: 'ProjectCollateral',
+  CollateralMedia: 'CollateralMedia',
   Faq: 'Faq',
   ChatbotSession: 'ChatbotSession',
   ChatbotMessage: 'ChatbotMessage',
@@ -161,6 +162,25 @@ export const ProjectCollateralScalarFieldEnum = {
 } as const
 
 export type ProjectCollateralScalarFieldEnum = (typeof ProjectCollateralScalarFieldEnum)[keyof typeof ProjectCollateralScalarFieldEnum]
+
+
+export const CollateralMediaScalarFieldEnum = {
+  id: 'id',
+  collateralId: 'collateralId',
+  title: 'title',
+  originalName: 'originalName',
+  fileName: 'fileName',
+  fileUrl: 'fileUrl',
+  fileType: 'fileType',
+  mimeType: 'mimeType',
+  fileSize: 'fileSize',
+  seq: 'seq',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CollateralMediaScalarFieldEnum = (typeof CollateralMediaScalarFieldEnum)[keyof typeof CollateralMediaScalarFieldEnum]
 
 
 export const FaqScalarFieldEnum = {

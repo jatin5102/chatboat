@@ -402,6 +402,7 @@ export const ModelName = {
   Projects: 'Projects',
   ProjectRera: 'ProjectRera',
   ProjectCollateral: 'ProjectCollateral',
+  CollateralMedia: 'CollateralMedia',
   Faq: 'Faq',
   ChatbotSession: 'ChatbotSession',
   ChatbotMessage: 'ChatbotMessage',
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "platter" | "channelPartner" | "projects" | "projectRera" | "projectCollateral" | "faq" | "chatbotSession" | "chatbotMessage" | "projectEnquiry" | "channelPartnerEnquiry"
+    modelProps: "platter" | "channelPartner" | "projects" | "projectRera" | "projectCollateral" | "collateralMedia" | "faq" | "chatbotSession" | "chatbotMessage" | "projectEnquiry" | "channelPartnerEnquiry"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -793,6 +794,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ProjectCollateralCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ProjectCollateralCountAggregateOutputType> | number
+        }
+      }
+    }
+    CollateralMedia: {
+      payload: Prisma.$CollateralMediaPayload<ExtArgs>
+      fields: Prisma.CollateralMediaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CollateralMediaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CollateralMediaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload>
+        }
+        findFirst: {
+          args: Prisma.CollateralMediaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CollateralMediaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload>
+        }
+        findMany: {
+          args: Prisma.CollateralMediaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload>[]
+        }
+        create: {
+          args: Prisma.CollateralMediaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload>
+        }
+        createMany: {
+          args: Prisma.CollateralMediaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CollateralMediaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload>[]
+        }
+        delete: {
+          args: Prisma.CollateralMediaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload>
+        }
+        update: {
+          args: Prisma.CollateralMediaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload>
+        }
+        deleteMany: {
+          args: Prisma.CollateralMediaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CollateralMediaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CollateralMediaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload>[]
+        }
+        upsert: {
+          args: Prisma.CollateralMediaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollateralMediaPayload>
+        }
+        aggregate: {
+          args: Prisma.CollateralMediaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCollateralMedia>
+        }
+        groupBy: {
+          args: Prisma.CollateralMediaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CollateralMediaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CollateralMediaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CollateralMediaCountAggregateOutputType> | number
         }
       }
     }
@@ -1289,6 +1364,25 @@ export const ProjectCollateralScalarFieldEnum = {
 export type ProjectCollateralScalarFieldEnum = (typeof ProjectCollateralScalarFieldEnum)[keyof typeof ProjectCollateralScalarFieldEnum]
 
 
+export const CollateralMediaScalarFieldEnum = {
+  id: 'id',
+  collateralId: 'collateralId',
+  title: 'title',
+  originalName: 'originalName',
+  fileName: 'fileName',
+  fileUrl: 'fileUrl',
+  fileType: 'fileType',
+  mimeType: 'mimeType',
+  fileSize: 'fileSize',
+  seq: 'seq',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CollateralMediaScalarFieldEnum = (typeof CollateralMediaScalarFieldEnum)[keyof typeof CollateralMediaScalarFieldEnum]
+
+
 export const FaqScalarFieldEnum = {
   id: 'id',
   question: 'question',
@@ -1666,6 +1760,7 @@ export type GlobalOmitConfig = {
   projects?: Prisma.ProjectsOmit
   projectRera?: Prisma.ProjectReraOmit
   projectCollateral?: Prisma.ProjectCollateralOmit
+  collateralMedia?: Prisma.CollateralMediaOmit
   faq?: Prisma.FaqOmit
   chatbotSession?: Prisma.ChatbotSessionOmit
   chatbotMessage?: Prisma.ChatbotMessageOmit

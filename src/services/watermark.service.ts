@@ -217,33 +217,20 @@ export class WatermarkService {
     const bannerHeight = Math.max(70, Math.round(height * 0.11));
     const fontSizeTitle = Math.max(16, Math.round(bannerHeight * 0.36));
 
-    const safeName = this.escapeXml(userName || 'M3M Partner');
+    const isGeneric =
+      !userName ||
+      userName.trim().toLowerCase() === 'partner' ||
+      userName.trim().toLowerCase() === 'channel partner';
+    const safeName = isGeneric ? '' : this.escapeXml(userName.trim());
     const safePhone = this.escapeXml(userPhone || '');
 
-    // SVG banner overlay focusing cleanly on name and phone number
+    const callText = safeName
+      ? `To know more, call <tspan fill="#f59e0b">${safeName}</tspan>: <tspan fill="#38bdf8">${safePhone}</tspan>`
+      : `To know more, call: <tspan fill="#38bdf8">${safePhone}</tspan>`;
+
+    // SVG banner overlay: ONLY User Name and Mobile Number, no extra branding
     const svgOverlay = `
       <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <!-- Top left badge -->
-        <g opacity="0.92">
-          <rect x="20" y="20" width="260" height="34" rx="6" fill="#0f172a" opacity="0.85"/>
-          <text x="32" y="42" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#38bdf8">
-            M3M NOIDA COLLATERAL
-          </text>
-        </g>
-
-        <!-- Subtle center diagonal watermark -->
-        <g opacity="0.18">
-          <text x="${width / 2}" y="${height / 2}" 
-                font-family="Arial, Helvetica, sans-serif" 
-                font-size="${Math.round(width * 0.04)}" 
-                font-weight="bold" 
-                fill="#ffffff" 
-                text-anchor="middle" 
-                transform="rotate(-25 ${width / 2} ${height / 2})">
-            ${safeName} • ${safePhone}
-          </text>
-        </g>
-
         <!-- Bottom personalization banner: ONLY Name and Phone Number -->
         <g>
           <rect x="0" y="${height - bannerHeight}" width="${width}" height="${bannerHeight}" fill="#080204" opacity="0.94"/>
@@ -253,9 +240,9 @@ export class WatermarkService {
                 font-family="Arial, Helvetica, sans-serif" 
                 font-size="${fontSizeTitle}" 
                 font-weight="bold" 
-                fill="#ffffff"
+                fill="#ffffff" 
                 text-anchor="middle">
-            To know more, call <tspan fill="#f59e0b">${safeName}</tspan>: <tspan fill="#38bdf8">${safePhone}</tspan>
+            ${callText}
           </text>
         </g>
       </svg>
@@ -296,11 +283,19 @@ export class WatermarkService {
       year: 'numeric',
     });
 
-    const safePdfName = (userName || 'Partner').replace(/[^\x20-\x7E]/g, '').trim() || 'Partner';
+    const isGenericPdf =
+      !userName ||
+      userName.trim().toLowerCase() === 'partner' ||
+      userName.trim().toLowerCase() === 'channel partner';
+    const safePdfName = isGenericPdf ? '' : userName.replace(/[^\x20-\x7E]/g, '').trim();
     const safePdfPhone = (userPhone || '').replace(/[^\x20-\x7E]/g, '').trim();
 
-    const displayClient = `To know more, call ${safePdfName}: ${safePdfPhone}`;
-    const watermarkCenterText = `M3M NOIDA • ${safePdfName.toUpperCase()} - ${safePdfPhone}`;
+    const displayClient = safePdfName
+      ? `To know more, call ${safePdfName}: ${safePdfPhone}`
+      : `To know more, call: ${safePdfPhone}`;
+    const watermarkCenterText = safePdfName
+      ? `${safePdfName.toUpperCase()} - ${safePdfPhone}`
+      : safePdfPhone;
 
     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
       const page = pages[pageIndex];
@@ -316,7 +311,7 @@ export class WatermarkService {
         opacity: 0.95,
       });
 
-      page.drawText(`M3M NOIDA | ${displayClient}`, {
+      page.drawText(`${displayClient}`, {
         x: 20,
         y: height - 19,
         size: 9.0,
@@ -344,7 +339,7 @@ export class WatermarkService {
           borderWidth: 1.2,
         });
 
-        page.drawText('AUTHORIZED M3M NOIDA CHANNEL PARTNER COLLATERAL', {
+        page.drawText('OFFICIAL MARKETING COLLATERAL', {
           x: 55,
           y: height - 152,
           size: 8.5,
@@ -352,7 +347,7 @@ export class WatermarkService {
           color: rgb(0.12, 0.45, 0.8),
         });
 
-        page.drawText(`To know more, call: ${safePdfName.toUpperCase()} | MOB: ${safePdfPhone}`, {
+        page.drawText(displayClient, {
           x: 55,
           y: height - 170,
           size: 9.5,

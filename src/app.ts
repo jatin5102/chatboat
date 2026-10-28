@@ -62,8 +62,11 @@ function setupWhatsAppClient(): any {
 
   // Event: Authenticated
   newClient.on('authenticated', () => {
+    isWhatsAppReady = true;
     chatbotConnectionManager.setAuthenticated();
+    chatbotConnectionManager.setReady();
     console.log('✅ WhatsApp authenticated successfully! Session saved in .wwebjs_auth.');
+    console.log('🎉 WhatsApp Bot is ONLINE and ready to handle incoming leads!');
   });
 
   // Event: Auth failure
@@ -76,7 +79,7 @@ function setupWhatsAppClient(): any {
   newClient.on('ready', () => {
     isWhatsAppReady = true;
     chatbotConnectionManager.setReady();
-    console.log('🎉 WhatsApp Bot is ONLINE and ready to handle incoming leads!');
+    console.log('🎉 WhatsApp Bot ready confirmed!');
   });
 
   // Event: Disconnected
@@ -86,33 +89,44 @@ function setupWhatsAppClient(): any {
     console.log('⚠️ WhatsApp Bot disconnected:', reason);
   });
 
-  // Event: Incoming message
-  newClient.on('message', async (message: any) => {
-    try {
-      // 1. Only process messages after WhatsApp client is fully connected and ready
-      if (!isWhatsAppReady) {
-        console.log(`[Bot] Client not ready yet. Ignoring message from ${message.from}`);
-        return;
-      }
+  // Event: Incoming message handler (processes both message & message_create with deduplication)
+  const processedMessageIds = new Set<string>();
 
-      // 2. Ignore messages sent from the bot's own WhatsApp account
+  const handleIncomingMessage = async (message: any) => {
+    try {
+      // 1. Ignore messages sent from the bot's own WhatsApp account
       if (message.fromMe) {
         return;
       }
 
-      // 3. Ignore old historical backlog messages (older than 2 minutes / 120 seconds from offline sync)
-      const nowSec = Math.floor(Date.now() / 1000);
-      if (message.timestamp && (nowSec - message.timestamp > 120)) {
-        console.log(`[Bot] Ignoring old backlog message from ${message.from} (sent ${nowSec - message.timestamp}s ago)`);
+      // 2. Ignore group chats, status updates, or broadcasts
+      if (message.from && (message.from.endsWith('@g.us') || message.isStatus || message.from === 'status@broadcast')) {
         return;
       }
 
-      console.log(`[Bot] 📩 Incoming message from ${message.from}: "${message.body}"`);
+      // 3. Deduplicate events
+      const msgId = message.id?._serialized || message.id?.id;
+      if (msgId) {
+        if (processedMessageIds.has(msgId)) return;
+        processedMessageIds.add(msgId);
+        setTimeout(() => processedMessageIds.delete(msgId), 30000);
+      }
+
+      // 4. Ignore old historical backlog messages (older than 10 minutes)
+      const nowSec = Math.floor(Date.now() / 1000);
+      if (message.timestamp && (nowSec - message.timestamp > 600)) {
+        return;
+      }
+
+      console.log(`[Bot] 📩 Incoming message from ${message.from}: "${message.body || ''}"`);
       await botService.handleMessage(newClient, message);
     } catch (error) {
       console.error('Error handling message:', error);
     }
-  });
+  };
+
+  newClient.on('message', handleIncomingMessage);
+  newClient.on('message_create', handleIncomingMessage);
 
   return newClient;
 }

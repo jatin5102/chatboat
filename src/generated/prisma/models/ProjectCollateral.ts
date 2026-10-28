@@ -290,6 +290,7 @@ export type ProjectCollateralWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"ProjectCollateral"> | Date | string
   platter?: Prisma.XOR<Prisma.PlatterNullableScalarRelationFilter, Prisma.PlatterWhereInput> | null
   project?: Prisma.XOR<Prisma.ProjectsNullableScalarRelationFilter, Prisma.ProjectsWhereInput> | null
+  mediaItems?: Prisma.CollateralMediaListRelationFilter
 }
 
 export type ProjectCollateralOrderByWithRelationInput = {
@@ -309,6 +310,7 @@ export type ProjectCollateralOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   platter?: Prisma.PlatterOrderByWithRelationInput
   project?: Prisma.ProjectsOrderByWithRelationInput
+  mediaItems?: Prisma.CollateralMediaOrderByRelationAggregateInput
 }
 
 export type ProjectCollateralWhereUniqueInput = Prisma.AtLeast<{
@@ -331,6 +333,7 @@ export type ProjectCollateralWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"ProjectCollateral"> | Date | string
   platter?: Prisma.XOR<Prisma.PlatterNullableScalarRelationFilter, Prisma.PlatterWhereInput> | null
   project?: Prisma.XOR<Prisma.ProjectsNullableScalarRelationFilter, Prisma.ProjectsWhereInput> | null
+  mediaItems?: Prisma.CollateralMediaListRelationFilter
 }, "id">
 
 export type ProjectCollateralOrderByWithAggregationInput = {
@@ -390,6 +393,7 @@ export type ProjectCollateralCreateInput = {
   updatedAt?: Date | string
   platter?: Prisma.PlatterCreateNestedOneWithoutCollateralsInput
   project?: Prisma.ProjectsCreateNestedOneWithoutProjectCollateralsInput
+  mediaItems?: Prisma.CollateralMediaCreateNestedManyWithoutCollateralInput
 }
 
 export type ProjectCollateralUncheckedCreateInput = {
@@ -407,6 +411,7 @@ export type ProjectCollateralUncheckedCreateInput = {
   status?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaItems?: Prisma.CollateralMediaUncheckedCreateNestedManyWithoutCollateralInput
 }
 
 export type ProjectCollateralUpdateInput = {
@@ -424,6 +429,7 @@ export type ProjectCollateralUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   platter?: Prisma.PlatterUpdateOneWithoutCollateralsNestedInput
   project?: Prisma.ProjectsUpdateOneWithoutProjectCollateralsNestedInput
+  mediaItems?: Prisma.CollateralMediaUpdateManyWithoutCollateralNestedInput
 }
 
 export type ProjectCollateralUncheckedUpdateInput = {
@@ -441,6 +447,7 @@ export type ProjectCollateralUncheckedUpdateInput = {
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaItems?: Prisma.CollateralMediaUncheckedUpdateManyWithoutCollateralNestedInput
 }
 
 export type ProjectCollateralCreateManyInput = {
@@ -561,6 +568,11 @@ export type ProjectCollateralSumOrderByAggregateInput = {
   seq?: Prisma.SortOrder
 }
 
+export type ProjectCollateralNullableScalarRelationFilter = {
+  is?: Prisma.ProjectCollateralWhereInput | null
+  isNot?: Prisma.ProjectCollateralWhereInput | null
+}
+
 export type ProjectCollateralCreateNestedManyWithoutPlatterInput = {
   create?: Prisma.XOR<Prisma.ProjectCollateralCreateWithoutPlatterInput, Prisma.ProjectCollateralUncheckedCreateWithoutPlatterInput> | Prisma.ProjectCollateralCreateWithoutPlatterInput[] | Prisma.ProjectCollateralUncheckedCreateWithoutPlatterInput[]
   connectOrCreate?: Prisma.ProjectCollateralCreateOrConnectWithoutPlatterInput | Prisma.ProjectCollateralCreateOrConnectWithoutPlatterInput[]
@@ -649,6 +661,22 @@ export type EnumFileTypeFieldUpdateOperationsInput = {
   set?: $Enums.FileType
 }
 
+export type ProjectCollateralCreateNestedOneWithoutMediaItemsInput = {
+  create?: Prisma.XOR<Prisma.ProjectCollateralCreateWithoutMediaItemsInput, Prisma.ProjectCollateralUncheckedCreateWithoutMediaItemsInput>
+  connectOrCreate?: Prisma.ProjectCollateralCreateOrConnectWithoutMediaItemsInput
+  connect?: Prisma.ProjectCollateralWhereUniqueInput
+}
+
+export type ProjectCollateralUpdateOneWithoutMediaItemsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProjectCollateralCreateWithoutMediaItemsInput, Prisma.ProjectCollateralUncheckedCreateWithoutMediaItemsInput>
+  connectOrCreate?: Prisma.ProjectCollateralCreateOrConnectWithoutMediaItemsInput
+  upsert?: Prisma.ProjectCollateralUpsertWithoutMediaItemsInput
+  disconnect?: Prisma.ProjectCollateralWhereInput | boolean
+  delete?: Prisma.ProjectCollateralWhereInput | boolean
+  connect?: Prisma.ProjectCollateralWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectCollateralUpdateToOneWithWhereWithoutMediaItemsInput, Prisma.ProjectCollateralUpdateWithoutMediaItemsInput>, Prisma.ProjectCollateralUncheckedUpdateWithoutMediaItemsInput>
+}
+
 export type ProjectCollateralCreateWithoutPlatterInput = {
   id?: string
   code?: string
@@ -663,6 +691,7 @@ export type ProjectCollateralCreateWithoutPlatterInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   project?: Prisma.ProjectsCreateNestedOneWithoutProjectCollateralsInput
+  mediaItems?: Prisma.CollateralMediaCreateNestedManyWithoutCollateralInput
 }
 
 export type ProjectCollateralUncheckedCreateWithoutPlatterInput = {
@@ -679,6 +708,7 @@ export type ProjectCollateralUncheckedCreateWithoutPlatterInput = {
   status?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaItems?: Prisma.CollateralMediaUncheckedCreateNestedManyWithoutCollateralInput
 }
 
 export type ProjectCollateralCreateOrConnectWithoutPlatterInput = {
@@ -741,6 +771,7 @@ export type ProjectCollateralCreateWithoutProjectInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   platter?: Prisma.PlatterCreateNestedOneWithoutCollateralsInput
+  mediaItems?: Prisma.CollateralMediaCreateNestedManyWithoutCollateralInput
 }
 
 export type ProjectCollateralUncheckedCreateWithoutProjectInput = {
@@ -757,6 +788,7 @@ export type ProjectCollateralUncheckedCreateWithoutProjectInput = {
   status?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaItems?: Prisma.CollateralMediaUncheckedCreateNestedManyWithoutCollateralInput
 }
 
 export type ProjectCollateralCreateOrConnectWithoutProjectInput = {
@@ -783,6 +815,90 @@ export type ProjectCollateralUpdateWithWhereUniqueWithoutProjectInput = {
 export type ProjectCollateralUpdateManyWithWhereWithoutProjectInput = {
   where: Prisma.ProjectCollateralScalarWhereInput
   data: Prisma.XOR<Prisma.ProjectCollateralUpdateManyMutationInput, Prisma.ProjectCollateralUncheckedUpdateManyWithoutProjectInput>
+}
+
+export type ProjectCollateralCreateWithoutMediaItemsInput = {
+  id?: string
+  code?: string
+  title: string
+  subtitle?: string | null
+  icon?: string | null
+  fileType?: $Enums.FileType
+  fileUrl?: string | null
+  content?: string | null
+  seq?: number
+  status?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  platter?: Prisma.PlatterCreateNestedOneWithoutCollateralsInput
+  project?: Prisma.ProjectsCreateNestedOneWithoutProjectCollateralsInput
+}
+
+export type ProjectCollateralUncheckedCreateWithoutMediaItemsInput = {
+  id?: string
+  platterId?: string | null
+  projectId?: string | null
+  code?: string
+  title: string
+  subtitle?: string | null
+  icon?: string | null
+  fileType?: $Enums.FileType
+  fileUrl?: string | null
+  content?: string | null
+  seq?: number
+  status?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ProjectCollateralCreateOrConnectWithoutMediaItemsInput = {
+  where: Prisma.ProjectCollateralWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProjectCollateralCreateWithoutMediaItemsInput, Prisma.ProjectCollateralUncheckedCreateWithoutMediaItemsInput>
+}
+
+export type ProjectCollateralUpsertWithoutMediaItemsInput = {
+  update: Prisma.XOR<Prisma.ProjectCollateralUpdateWithoutMediaItemsInput, Prisma.ProjectCollateralUncheckedUpdateWithoutMediaItemsInput>
+  create: Prisma.XOR<Prisma.ProjectCollateralCreateWithoutMediaItemsInput, Prisma.ProjectCollateralUncheckedCreateWithoutMediaItemsInput>
+  where?: Prisma.ProjectCollateralWhereInput
+}
+
+export type ProjectCollateralUpdateToOneWithWhereWithoutMediaItemsInput = {
+  where?: Prisma.ProjectCollateralWhereInput
+  data: Prisma.XOR<Prisma.ProjectCollateralUpdateWithoutMediaItemsInput, Prisma.ProjectCollateralUncheckedUpdateWithoutMediaItemsInput>
+}
+
+export type ProjectCollateralUpdateWithoutMediaItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fileType?: Prisma.EnumFileTypeFieldUpdateOperationsInput | $Enums.FileType
+  fileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seq?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  platter?: Prisma.PlatterUpdateOneWithoutCollateralsNestedInput
+  project?: Prisma.ProjectsUpdateOneWithoutProjectCollateralsNestedInput
+}
+
+export type ProjectCollateralUncheckedUpdateWithoutMediaItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  platterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fileType?: Prisma.EnumFileTypeFieldUpdateOperationsInput | $Enums.FileType
+  fileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seq?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProjectCollateralCreateManyPlatterInput = {
@@ -815,6 +931,7 @@ export type ProjectCollateralUpdateWithoutPlatterInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.ProjectsUpdateOneWithoutProjectCollateralsNestedInput
+  mediaItems?: Prisma.CollateralMediaUpdateManyWithoutCollateralNestedInput
 }
 
 export type ProjectCollateralUncheckedUpdateWithoutPlatterInput = {
@@ -831,6 +948,7 @@ export type ProjectCollateralUncheckedUpdateWithoutPlatterInput = {
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaItems?: Prisma.CollateralMediaUncheckedUpdateManyWithoutCollateralNestedInput
 }
 
 export type ProjectCollateralUncheckedUpdateManyWithoutPlatterInput = {
@@ -879,6 +997,7 @@ export type ProjectCollateralUpdateWithoutProjectInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   platter?: Prisma.PlatterUpdateOneWithoutCollateralsNestedInput
+  mediaItems?: Prisma.CollateralMediaUpdateManyWithoutCollateralNestedInput
 }
 
 export type ProjectCollateralUncheckedUpdateWithoutProjectInput = {
@@ -895,6 +1014,7 @@ export type ProjectCollateralUncheckedUpdateWithoutProjectInput = {
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaItems?: Prisma.CollateralMediaUncheckedUpdateManyWithoutCollateralNestedInput
 }
 
 export type ProjectCollateralUncheckedUpdateManyWithoutProjectInput = {
@@ -914,6 +1034,35 @@ export type ProjectCollateralUncheckedUpdateManyWithoutProjectInput = {
 }
 
 
+/**
+ * Count Type ProjectCollateralCountOutputType
+ */
+
+export type ProjectCollateralCountOutputType = {
+  mediaItems: number
+}
+
+export type ProjectCollateralCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  mediaItems?: boolean | ProjectCollateralCountOutputTypeCountMediaItemsArgs
+}
+
+/**
+ * ProjectCollateralCountOutputType without action
+ */
+export type ProjectCollateralCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProjectCollateralCountOutputType
+   */
+  select?: Prisma.ProjectCollateralCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * ProjectCollateralCountOutputType without action
+ */
+export type ProjectCollateralCountOutputTypeCountMediaItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CollateralMediaWhereInput
+}
+
 
 export type ProjectCollateralSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -932,6 +1081,8 @@ export type ProjectCollateralSelect<ExtArgs extends runtime.Types.Extensions.Int
   updatedAt?: boolean
   platter?: boolean | Prisma.ProjectCollateral$platterArgs<ExtArgs>
   project?: boolean | Prisma.ProjectCollateral$projectArgs<ExtArgs>
+  mediaItems?: boolean | Prisma.ProjectCollateral$mediaItemsArgs<ExtArgs>
+  _count?: boolean | Prisma.ProjectCollateralCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["projectCollateral"]>
 
 export type ProjectCollateralSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -993,6 +1144,8 @@ export type ProjectCollateralOmit<ExtArgs extends runtime.Types.Extensions.Inter
 export type ProjectCollateralInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   platter?: boolean | Prisma.ProjectCollateral$platterArgs<ExtArgs>
   project?: boolean | Prisma.ProjectCollateral$projectArgs<ExtArgs>
+  mediaItems?: boolean | Prisma.ProjectCollateral$mediaItemsArgs<ExtArgs>
+  _count?: boolean | Prisma.ProjectCollateralCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProjectCollateralIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   platter?: boolean | Prisma.ProjectCollateral$platterArgs<ExtArgs>
@@ -1008,6 +1161,7 @@ export type $ProjectCollateralPayload<ExtArgs extends runtime.Types.Extensions.I
   objects: {
     platter: Prisma.$PlatterPayload<ExtArgs> | null
     project: Prisma.$ProjectsPayload<ExtArgs> | null
+    mediaItems: Prisma.$CollateralMediaPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1420,6 +1574,7 @@ export interface Prisma__ProjectCollateralClient<T, Null = never, ExtArgs extend
   readonly [Symbol.toStringTag]: "PrismaPromise"
   platter<T extends Prisma.ProjectCollateral$platterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectCollateral$platterArgs<ExtArgs>>): Prisma.Prisma__PlatterClient<runtime.Types.Result.GetResult<Prisma.$PlatterPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   project<T extends Prisma.ProjectCollateral$projectArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectCollateral$projectArgs<ExtArgs>>): Prisma.Prisma__ProjectsClient<runtime.Types.Result.GetResult<Prisma.$ProjectsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  mediaItems<T extends Prisma.ProjectCollateral$mediaItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectCollateral$mediaItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CollateralMediaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1899,6 +2054,30 @@ export type ProjectCollateral$projectArgs<ExtArgs extends runtime.Types.Extensio
    */
   include?: Prisma.ProjectsInclude<ExtArgs> | null
   where?: Prisma.ProjectsWhereInput
+}
+
+/**
+ * ProjectCollateral.mediaItems
+ */
+export type ProjectCollateral$mediaItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CollateralMedia
+   */
+  select?: Prisma.CollateralMediaSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CollateralMedia
+   */
+  omit?: Prisma.CollateralMediaOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CollateralMediaInclude<ExtArgs> | null
+  where?: Prisma.CollateralMediaWhereInput
+  orderBy?: Prisma.CollateralMediaOrderByWithRelationInput | Prisma.CollateralMediaOrderByWithRelationInput[]
+  cursor?: Prisma.CollateralMediaWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CollateralMediaScalarFieldEnum | Prisma.CollateralMediaScalarFieldEnum[]
 }
 
 /**
