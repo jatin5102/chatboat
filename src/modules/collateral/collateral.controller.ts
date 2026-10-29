@@ -9,6 +9,34 @@ import { ApiError } from "../../utils/apiError.utils.js";
 import { paginate } from "../../utils/pagination.utils.js";
 import { formatUploadedFile } from "../../middlewares/upload.middleware.js";
 import { FileType } from "../../generated/prisma/enums.js";
+import { getFileUrl } from "../../utils/fileHandling.utils.js";
+
+/**
+ * Helper to enrich collateral fileUrl, icon, and mediaItems with full URLs via getFileUrl
+ */
+export async function transformCollateralUrls(item: any): Promise<any> {
+    if (!item || typeof item !== "object") return item;
+
+    const icon = item.icon ? (await getFileUrl(item.icon)) || item.icon : item.icon;
+    const fileUrl = item.fileUrl ? (await getFileUrl(item.fileUrl)) || item.fileUrl : item.fileUrl;
+
+    let mediaItems = item.mediaItems;
+    if (Array.isArray(mediaItems)) {
+        mediaItems = await Promise.all(
+            mediaItems.map(async (m: any) => ({
+                ...m,
+                fileUrl: m.fileUrl ? (await getFileUrl(m.fileUrl)) || m.fileUrl : m.fileUrl,
+            })),
+        );
+    }
+
+    return {
+        ...item,
+        icon,
+        fileUrl,
+        ...(mediaItems !== undefined && { mediaItems }),
+    };
+}
 
 /**
  * Get all collaterals with optional query filters (platterId, projectId, status, code) and pagination
@@ -41,12 +69,17 @@ export const getCollaterals = asyncHandler(async (req: Request, res: Response) =
             },
             { page: pageNum, limit: limitNum || 10 },
         );
-        successResponse(res, 200, "Collaterals fetched successfully", result);
+        const transformedItems = await Promise.all(result.data.map(transformCollateralUrls));
+        successResponse(res, 200, "Collaterals fetched successfully", {
+            ...result,
+            data: transformedItems,
+        });
         return;
     }
 
     const collaterals = await collateralService.getAllCollaterals(filter);
-    successResponse(res, 200, "Collaterals fetched successfully", collaterals);
+    const transformed = await Promise.all(collaterals.map(transformCollateralUrls));
+    successResponse(res, 200, "Collaterals fetched successfully", transformed);
 });
 
 /**
@@ -55,7 +88,8 @@ export const getCollaterals = asyncHandler(async (req: Request, res: Response) =
 export const getActivePlatterCollaterals = asyncHandler(async (req: Request, res: Response) => {
     const platterId = String(req.params.platterId);
     const collaterals = await collateralService.getActiveCollateralsForPlatter(platterId);
-    successResponse(res, 200, "Active platter collaterals fetched successfully", collaterals);
+    const transformed = await Promise.all(collaterals.map(transformCollateralUrls));
+    successResponse(res, 200, "Active platter collaterals fetched successfully", transformed);
 });
 
 /**
@@ -65,7 +99,8 @@ export const initPlatterCollaterals = asyncHandler(async (req: Request, res: Res
     const platterId = String(req.params.platterId);
     await collateralService.ensurePlatterCollaterals(platterId);
     const result = await collateralService.getAllCollaterals({ platterId });
-    successResponse(res, 201, "Platter collaterals initialized successfully", result);
+    const transformed = await Promise.all(result.map(transformCollateralUrls));
+    successResponse(res, 201, "Platter collaterals initialized successfully", transformed);
 });
 
 /**
@@ -84,11 +119,12 @@ export const configurePlatterCollaterals = asyncHandler(async (req: Request, res
     }
 
     const result = await collateralService.configurePlatterCollaterals(platterId, activeCodes);
+    const transformed = await Promise.all(result.map(transformCollateralUrls));
     successResponse(
         res,
         200,
         `Platter collaterals configured successfully: [${activeCodes.join(", ")}] active`,
-        result,
+        transformed,
     );
 });
 
@@ -98,7 +134,8 @@ export const configurePlatterCollaterals = asyncHandler(async (req: Request, res
 export const getActiveProjectCollaterals = asyncHandler(async (req: Request, res: Response) => {
     const projectId = String(req.params.projectId);
     const collaterals = await collateralService.getActiveCollateralsForProject(projectId);
-    successResponse(res, 200, "Active project collaterals fetched successfully", collaterals);
+    const transformed = await Promise.all(collaterals.map(transformCollateralUrls));
+    successResponse(res, 200, "Active project collaterals fetched successfully", transformed);
 });
 
 /**
@@ -112,7 +149,8 @@ export const getCollateralById = asyncHandler(async (req: Request, res: Response
         throw new ApiError(404, "Collateral not found");
     }
 
-    successResponse(res, 200, "Collateral fetched successfully", collateral);
+    const transformed = await transformCollateralUrls(collateral);
+    successResponse(res, 200, "Collateral fetched successfully", transformed);
 });
 
 /**
@@ -200,8 +238,9 @@ export const createCollateral = asyncHandler(async (req: Request, res: Response)
     });
 
     const result = await collateralService.getCollateralById(collateral.id);
+    const transformed = result ? await transformCollateralUrls(result) : collateral;
 
-    successResponse(res, 201, "Collateral created successfully", result || collateral);
+    successResponse(res, 201, "Collateral created successfully", transformed);
 });
 
 /**
@@ -264,8 +303,9 @@ export const updateCollateral = asyncHandler(async (req: Request, res: Response)
     });
 
     const result = await collateralService.getCollateralById(id);
+    const transformed = result ? await transformCollateralUrls(result) : updated;
 
-    successResponse(res, 200, "Collateral updated successfully", result || updated);
+    successResponse(res, 200, "Collateral updated successfully", transformed);
 });
 
 /**
@@ -350,11 +390,18 @@ export const getCollateralMedia = asyncHandler(async (req: Request, res: Respons
         orderBy: [{ seq: "asc" }, { createdAt: "asc" }],
     });
 
+    const transformedMedia = await Promise.all(
+        mediaItems.map(async (m) => ({
+            ...m,
+            fileUrl: m.fileUrl ? (await getFileUrl(m.fileUrl)) || m.fileUrl : m.fileUrl,
+        })),
+    );
+
     successResponse(res, 200, "Collateral media items fetched successfully", {
         collateralId,
         collateralTitle: collateral.title,
-        count: mediaItems.length,
-        mediaItems,
+        count: transformedMedia.length,
+        mediaItems: transformedMedia,
     });
 });
 

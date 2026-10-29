@@ -19,9 +19,10 @@ export const FileType = {
 export type FileType = (typeof FileType)[keyof typeof FileType]
 
 
-export const LeadRole = {
-  BUYER: 'BUYER',
-  CHANNEL_PARTNER: 'CHANNEL_PARTNER'
+export const Role = {
+  USER: 'USER',
+  ADMIN: 'ADMIN',
+  SEO: 'SEO'
 } as const
 
-export type LeadRole = (typeof LeadRole)[keyof typeof LeadRole]
+export type Role = (typeof Role)[keyof typeof Role]

@@ -6,27 +6,56 @@ import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
 import qrcode from "qrcode-terminal";
 import { botService } from "./services/bot.service.js";
-import { projectService } from "./services/project.service.js";
 import { prisma } from "./config/prisma.config.js";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
+import { authenticate, authorize } from "./middlewares/auth.middleware.js";
+import passport from "./config/passport.config.js";
 
 import modulesRouter from "./modules/index.js";
 import { chatbotConnectionManager } from "./modules/chatbot/chatbot.service.js";
+import { authLimiter, apiLimiter } from "./middlewares/rateLimiter.middleware.js";
 import { notFound } from "./middlewares/notFound.middleware.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.set("trust proxy", 1);
+app.use(helmet());
+
+const allowedOrigins = ["http://localhost:3000"];
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true);
+
+            if (allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
+        credentials: true,
+    }),
+);
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
+app.use(cookieParser());
+app.use(passport.initialize());
+app.options("*", cors());
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 // Serve static uploaded files from root uploads/ directory
-app.use("/uploads", express.static(path.resolve("uploads")));
+// app.use("/uploads", express.static(path.resolve("uploads")));
 
-// Modular API Routes (/api/v1/platters, /api/platters, etc.)
+app.use("/api/v1/admin/auth", authLimiter);
+app.use("/api/v1", apiLimiter);
+
 app.use("/api/v1", modulesRouter);
-app.use("/api", modulesRouter);
 
 // WhatsApp Web Client state & factory
 export let client: any = null;
@@ -144,10 +173,6 @@ export function getWhatsAppClient(): any {
     return client;
 }
 
-/**
- * REST API Routes for Database Records & Projects
- */
-
 // Health & Status
 app.get("/health", async (_req: Request, res: Response) => {
     try {
@@ -174,73 +199,6 @@ app.get("/health", async (_req: Request, res: Response) => {
         });
     } catch (err: any) {
         res.status(500).json({ status: "ERROR", error: err.message });
-    }
-});
-
-// Chat Sessions stored in Database
-app.get("/api/records/sessions", async (_req: Request, res: Response) => {
-    try {
-        const sessions = await prisma.chatbotSession.findMany({
-            orderBy: { updatedAt: "desc" },
-            include: {
-                _count: { select: { messages: true } },
-            },
-        });
-        res.json({ success: true, count: sessions.length, data: sessions });
-    } catch (err: any) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// Full Chat Flow History for a given Chat ID or Session ID
-app.get("/api/records/messages/:chatId", async (req: Request, res: Response) => {
-    try {
-        const id = String(req.params.chatId);
-        const messages = await prisma.chatbotMessage.findMany({
-            where: {
-                OR: [{ chatId: id }, { sessionId: id }],
-            },
-            orderBy: { createdAt: "asc" },
-        });
-        res.json({ success: true, count: messages.length, data: messages });
-    } catch (err: any) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// Update session step
-app.patch("/api/records/sessions/:id/step", async (req: Request, res: Response) => {
-    try {
-        const id = String(req.params.id);
-        const { step } = req.body;
-        const session = await prisma.chatbotSession.update({
-            where: { id },
-            data: { step, lastActive: new Date() },
-        });
-        res.json({ success: true, data: session });
-    } catch (err: any) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// Captured Enquiries / Leads
-app.get("/api/records/enquiries", async (_req: Request, res: Response) => {
-    try {
-        const buyerEnquiries = await prisma.projectEnquiry.findMany({
-            orderBy: { dateAt: "desc" },
-            take: 50,
-        });
-        const partnerEnquiries = await prisma.channelPartnerEnquiry.findMany({
-            orderBy: { dateAt: "desc" },
-            take: 50,
-        });
-        res.json({
-            success: true,
-            buyers: buyerEnquiries,
-            channelPartners: partnerEnquiries,
-        });
-    } catch (err: any) {
-        res.status(500).json({ success: false, error: err.message });
     }
 });
 
@@ -349,5 +307,8 @@ process.on("SIGINT", async () => {
     } catch {}
     process.exit(0);
 });
+
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;

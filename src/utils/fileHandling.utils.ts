@@ -80,9 +80,31 @@ export const deleteFile = async (key: string): Promise<boolean> => {
     }
 };
 
-export async function getFileUrl(key: string | undefined): Promise<string | null> {
+export async function getFileUrl(key: string | undefined | null): Promise<string | null> {
     if (!key) return null;
 
-    const baseUrl = process.env.BASE_URL || "http://localhost:4002";
-    return `${baseUrl}/api/v1/website/files/${key}`;
+    const trimmed = String(key).trim();
+    if (!trimmed) return null;
+
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        return trimmed;
+    }
+
+    // If it's an emoji or plain string with no file path or extension, return as-is
+    const hasPathOrExt =
+        trimmed.includes("/") ||
+        trimmed.includes("\\") ||
+        /\.(png|jpe?g|gif|webp|svg|ico|pdf|mp4|mov|avi|mkv|docx?|xlsx?)$/i.test(trimmed);
+    if (!hasPathOrExt) {
+        return trimmed;
+    }
+
+    const rawBaseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 4002}`;
+    const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+
+    // Normalize slashes and remove leading slashes
+    const normalized = trimmed.replace(/\\/g, "/").replace(/^\/+/, "");
+    const uploadPath = normalized.startsWith("uploads/") ? normalized : `uploads/${normalized}`;
+
+    return `${baseUrl}/${uploadPath}`;
 }

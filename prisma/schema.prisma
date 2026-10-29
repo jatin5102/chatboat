@@ -14,6 +14,36 @@ enum FileType {
   document
 }
 
+enum Role {
+  USER
+  ADMIN
+  SEO
+}
+
+
+model User {
+  id                   String         @id @default(cuid())
+  email                String         @unique
+  name                 String?
+  password             String
+  role                 Role           @default(ADMIN)
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  refreshTokens        RefreshToken[]
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, token])
+}
 
 // ==========================================
 // 1. Platter (Categories: Residential, Commercial, etc.)
