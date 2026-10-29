@@ -179,13 +179,19 @@ export class ChatRecordService {
 
             if (!session) return;
 
+            // If mediaUrl exists and messageText is empty or a bracketed placeholder, save mediaUrl as message
+            const finalMessage =
+                mediaUrl && (!messageText || messageText.startsWith("[Watermarked") || messageText.startsWith("["))
+                    ? mediaUrl
+                    : messageText;
+
             await prisma.chatbotMessage.create({
                 data: {
                     sessionId: session.id,
                     chatId,
                     direction: "OUTGOING",
                     step,
-                    message: messageText,
+                    message: finalMessage,
                     mediaType,
                     mediaUrl: mediaUrl || null,
                     metadata: metadata || null,

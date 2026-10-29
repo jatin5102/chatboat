@@ -14,10 +14,6 @@ enum FileType {
   document
 }
 
-enum LeadRole {
-  BUYER
-  CHANNEL_PARTNER
-}
 
 // ==========================================
 // 1. Platter (Categories: Residential, Commercial, etc.)

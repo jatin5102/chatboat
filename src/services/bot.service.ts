@@ -771,6 +771,20 @@ export class BotService {
     }
 
     /**
+     * Formats a file path or URL for public/database consistency (e.g. /uploads/...)
+     */
+    private formatMediaUrl(url?: string | null): string | undefined {
+        if (!url) return undefined;
+        const trimmed = url.trim();
+        if (!trimmed) return undefined;
+        return trimmed.startsWith("/") ||
+            trimmed.startsWith("http://") ||
+            trimmed.startsWith("https://")
+            ? trimmed
+            : `/${trimmed}`;
+    }
+
+    /**
      * Delivers the selected collateral in background without rendering messages.
      * Supports single/multiple images with watermarks, custom EDM content, videos, PDFs, and custom platter items.
      */
@@ -824,11 +838,13 @@ export class BotService {
                             );
                             // Sent ONLY images with watermark - no explanation captions
                             await client.sendMessage(chatId, media);
+                            const fileUrl = this.formatMediaUrl(mediaList[idx]) || mediaList[idx];
                             await chatRecordService.recordOutgoingMessage(
                                 chatId,
-                                "[Watermarked Story Image]",
+                                fileUrl,
                                 ChatStep.SELECT_COLLATERAL,
                                 "image",
+                                fileUrl,
                             );
                             sentCount++;
                         } catch (err) {
@@ -920,11 +936,13 @@ export class BotService {
                             "EDM.jpg",
                         );
                         await client.sendMessage(chatId, media, { caption: edmText });
+                        const edmMediaUrl = this.formatMediaUrl(mediaList[0]);
                         await chatRecordService.recordOutgoingMessage(
                             chatId,
-                            edmText,
+                            edmMediaUrl || edmText,
                             ChatStep.SELECT_COLLATERAL,
                             "image",
+                            edmMediaUrl,
                         );
                         await this.sendConfirmationOptions(client, chatId, platter.name);
                         return;
@@ -957,11 +975,13 @@ export class BotService {
                                 `🏢 *${platter.name}*\n` +
                                 `📞 *To know more, call ${userName}: ${userMobile}*`;
                             await client.sendMessage(chatId, media, { caption });
+                            const videoUrl = this.formatMediaUrl(mediaList[idx]);
                             await chatRecordService.recordOutgoingMessage(
                                 chatId,
-                                caption,
+                                videoUrl || caption,
                                 ChatStep.SELECT_COLLATERAL,
                                 "video",
+                                videoUrl,
                             );
                             sentCount++;
                         } catch (err: any) {
@@ -1025,11 +1045,13 @@ export class BotService {
 
                     await client.sendMessage(chatId, media, { sendMediaAsDocument: true });
                     await client.sendMessage(chatId, pdfCaption);
+                    const brochureUrl = this.formatMediaUrl(brochurePath);
                     await chatRecordService.recordOutgoingMessage(
                         chatId,
-                        pdfCaption,
+                        brochureUrl || pdfCaption,
                         ChatStep.SELECT_COLLATERAL,
                         "pdf",
+                        brochureUrl,
                     );
                 } else {
                     await this.reply(
@@ -1071,6 +1093,7 @@ export class BotService {
                         const isPdf = resolvedPlan.toLowerCase().endsWith(".pdf");
                         const partText =
                             mediaList.length > 1 ? ` (${idx + 1}/${mediaList.length})` : "";
+                        const planUrl = this.formatMediaUrl(mediaList[idx]);
 
                         if (isPdf) {
                             const watermarkedPdf = await watermarkService.watermarkPdf(
@@ -1094,9 +1117,10 @@ export class BotService {
                             await client.sendMessage(chatId, caption);
                             await chatRecordService.recordOutgoingMessage(
                                 chatId,
-                                caption,
+                                planUrl || caption,
                                 ChatStep.SELECT_COLLATERAL,
                                 "document",
+                                planUrl,
                             );
                             sentCount++;
                         } else {
@@ -1116,9 +1140,10 @@ export class BotService {
                             await client.sendMessage(chatId, media);
                             await chatRecordService.recordOutgoingMessage(
                                 chatId,
-                                "[Watermarked Floor Plan]",
+                                planUrl || `[Floor Plan: ${collateral.title}]`,
                                 ChatStep.SELECT_COLLATERAL,
                                 "image",
+                                planUrl,
                             );
                             sentCount++;
                         }
@@ -1189,21 +1214,25 @@ export class BotService {
 
                             await client.sendMessage(chatId, media, { sendMediaAsDocument: true });
                             await client.sendMessage(chatId, caption);
+                            const oppUrl = this.formatMediaUrl(mediaList[idx]);
                             await chatRecordService.recordOutgoingMessage(
                                 chatId,
-                                caption,
+                                oppUrl || caption,
                                 ChatStep.SELECT_COLLATERAL,
                                 "document",
+                                oppUrl,
                             );
                             sentCount++;
                         } else {
                             const media = MessageMedia.fromFilePath(resolvedOpp);
                             await client.sendMessage(chatId, media);
+                            const oppUrl = this.formatMediaUrl(mediaList[idx]);
                             await chatRecordService.recordOutgoingMessage(
                                 chatId,
-                                "[Opportunity Document]",
+                                oppUrl || `[Opportunity Document: ${collateral.title}]`,
                                 ChatStep.SELECT_COLLATERAL,
                                 "document",
+                                oppUrl,
                             );
                             sentCount++;
                         }
@@ -1240,6 +1269,7 @@ export class BotService {
                 if (filePath && fs.existsSync(filePath)) {
                     const partText =
                         mediaList.length > 1 ? ` (${idx + 1}/${mediaList.length})` : "";
+                    const customUrl = this.formatMediaUrl(mediaList[idx]);
                     const caption =
                         `📑 *${collateral.title.toUpperCase()}${partText}*\n` +
                         `🏢 *Platter:* ${platter.name}\n` +
@@ -1264,9 +1294,10 @@ export class BotService {
                             await client.sendMessage(chatId, media);
                             await chatRecordService.recordOutgoingMessage(
                                 chatId,
-                                `[Watermarked Image: ${collateral.title}]`,
+                                customUrl || `[Image: ${collateral.title}]`,
                                 ChatStep.SELECT_COLLATERAL,
                                 "image",
+                                customUrl,
                             );
                             sentCount++;
                         } catch (err) {
@@ -1290,9 +1321,10 @@ export class BotService {
                             await client.sendMessage(chatId, caption);
                             await chatRecordService.recordOutgoingMessage(
                                 chatId,
-                                caption,
+                                customUrl || caption,
                                 ChatStep.SELECT_COLLATERAL,
                                 "document",
+                                customUrl,
                             );
                             sentCount++;
                         } catch (err) {
@@ -1307,9 +1339,10 @@ export class BotService {
                             await client.sendMessage(chatId, media, { caption });
                             await chatRecordService.recordOutgoingMessage(
                                 chatId,
-                                caption,
+                                customUrl || caption,
                                 ChatStep.SELECT_COLLATERAL,
                                 "video",
+                                customUrl,
                             );
                             sentCount++;
                         } catch (err) {

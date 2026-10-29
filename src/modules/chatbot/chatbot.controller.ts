@@ -2,7 +2,10 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { chatbotConnectionManager } from "./chatbot.service.js";
 import { successResponse } from "../../utils/responseHandler.utils.js";
-import { restartWhatsApp } from "../../app.js";
+import { restartWhatsApp, getWhatsAppClient } from "../../app.js";
+import { botService } from "../../services/bot.service.js";
+import { chatRecordService } from "../../services/chatRecord.service.js";
+import { prisma } from "../../config/prisma.config.js";
 
 export const getStatus = asyncHandler(async (_req: Request, res: Response) => {
   const status = chatbotConnectionManager.getStatus();
@@ -187,4 +190,56 @@ export const restart = asyncHandler(async (_req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({ status: "error", message: err.message });
   }
+});
+
+export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
+  const { chatId, sessionId, message, mediaType = "text", mediaUrl, step = "LIVE_SUPPORT" } = req.body;
+
+  let recipient = chatId;
+  let sId = sessionId;
+
+  if (!recipient && sId) {
+    const s = await prisma.chatbotSession.findUnique({ where: { id: sId } });
+    if (s) {
+      recipient = s.chatId;
+    }
+  } else if (recipient && !sId) {
+    const s = await prisma.chatbotSession.findUnique({ where: { chatId: recipient } });
+    if (s) {
+      sId = s.id;
+    }
+  }
+
+  if (!recipient || !message) {
+    res.status(400).json({ status: "error", message: "chatId (or sessionId) and message are required" });
+    return;
+  }
+
+  const client = getWhatsAppClient();
+  const connStatus = chatbotConnectionManager.getStatus();
+
+  let sentViaWhatsApp = false;
+  if (client && connStatus.isReady) {
+    try {
+      await botService.reply(client, recipient, message, step);
+      sentViaWhatsApp = true;
+    } catch (err: any) {
+      console.warn("[Chatbot] WhatsApp sending warning:", err.message);
+    }
+  }
+
+  // If WhatsApp wasn't ready or reply fallback didn't save, record to DB
+  if (!sentViaWhatsApp) {
+    await chatRecordService.recordOutgoingMessage(recipient, message, step, mediaType, mediaUrl);
+  }
+
+  const savedMsg = await prisma.chatbotMessage.findFirst({
+    where: { chatId: recipient, direction: "OUTGOING" },
+    orderBy: { createdAt: "desc" }
+  });
+
+  successResponse(res, 200, "Message sent successfully", {
+    sentViaWhatsApp,
+    message: savedMsg
+  });
 });
