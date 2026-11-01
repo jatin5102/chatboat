@@ -612,7 +612,7 @@ export class BotService {
                 : p.slug.includes("commercial")
                   ? "🏢"
                   : "🌟";
-            platterOptions += `${emoji} ${icon} *${p.name}* ${p.tagline ? `(${p.tagline})` : ""}\n`;
+            platterOptions += `${emoji} ${icon} *${p.name}*\n`;
         });
 
         const hasRealName = this.isValidName(partnerName);
@@ -622,7 +622,7 @@ export class BotService {
 
         const menuMsg =
             greetingLine +
-            `Please select a project category from the platter below:\n\n` +
+            `Please select a project from the list below:\n\n` +
             platterOptions +
             `\n👉 *Reply with a number (1 - ${platters.length}):*`;
 
@@ -703,7 +703,7 @@ export class BotService {
         const optMainMenu = activeCollaterals.length + 1;
         const totalOptions = optMainMenu;
 
-        const navOptions = `\n${this.getNumberEmoji(optMainMenu - 1)} 🏠 *Return to Main Menu (Platters)*\n`;
+        const navOptions = `\n${this.getNumberEmoji(optMainMenu - 1)} 🏠 *Return to Main Menu*\n`;
 
         const menuText =
             `Please select your personalized marketing collaterals from the list below for *${platter.name}*:\n` +
@@ -1384,9 +1384,8 @@ export class BotService {
         await sessionService.updateSession(to, { step: ChatStep.COLLATERAL_CONFIRMATION });
 
         const confirmMsg =
-            `✅ *Selected Marketing Collateral Delivered Successfully!*\n\n` +
-            `👉 *What would you like to do next?*\n` +
-            `1️⃣ 🎨 *Choose another collateral for ${categoryName}*\n` +
+            `✅ *Thank you for downloading your creative. If you’d like to access and download more creatives, please make a selection below.*\n\n` +
+            `1️⃣ 🎨 *Choose another Creativities*\n` +
             `2️⃣ 🏠 *Return to main menu*`;
 
         await this.reply(client, to, confirmMsg, ChatStep.COLLATERAL_CONFIRMATION);
