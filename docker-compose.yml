@@ -1,9 +1,8 @@
-version: "3.9"
-
 services:
-    chatbotBE:
+    chatbot-api:
         build: .
-        container_name: chatbotBE
+        image: chatbot-api
+        container_name: chatbot-api
         restart: always
         ports:
             - "4002:4002"
