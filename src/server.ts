@@ -2,6 +2,7 @@ import "dotenv/config";
 import app, { initWhatsApp } from "./app.js";
 import { prisma } from "./config/prisma.config.js";
 import { projectService } from "./services/project.service.js";
+import { ensureDefaultAdmin } from "./modules/auth/auth.service.js";
 import logger from "./utils/logger.utils.js";
 
 const PORT = process.env.PORT || 4002;
@@ -11,6 +12,9 @@ async function startServer() {
     await prisma.$connect();
     await prisma.$queryRaw`SELECT 1`;
     logger.info("✅ Database connected successfully via Prisma (PostgreSQL)");
+
+    // Ensure default admin user is present
+    await ensureDefaultAdmin();
 
     // Ensure projects and documents are ready in DB
     await projectService.ensureProjectsLoaded();

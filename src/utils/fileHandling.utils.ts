@@ -104,7 +104,11 @@ export async function getFileUrl(key: string | undefined | null): Promise<string
 
     // Normalize slashes and remove leading slashes
     const normalized = trimmed.replace(/\\/g, "/").replace(/^\/+/, "");
-    const uploadPath = normalized.startsWith("uploads/") ? normalized : `uploads/${normalized}`;
+    // If it points to assets/ or uploads/, preserve it; otherwise default to uploads/
+    const uploadPath =
+        normalized.startsWith("uploads/") || normalized.startsWith("assets/")
+            ? normalized
+            : `uploads/${normalized}`;
 
     return `${baseUrl}/${uploadPath}`;
 }

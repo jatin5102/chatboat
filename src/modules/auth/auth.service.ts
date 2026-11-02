@@ -116,3 +116,35 @@ export async function resetPassword(token: string, newPassword: string) {
 
     return { message: "Password reset successfully" };
 }
+
+/**
+ * Ensures an admin user exists in the database on startup.
+ */
+export async function ensureDefaultAdmin(): Promise<void> {
+    try {
+        const adminEmail =
+            process.env.DEFAULT_ADMIN_EMAIL || process.env.ADMIN_EMAIL || "admin@gmail.com";
+        const adminPassword =
+            process.env.DEFAULT_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || "Admin@123";
+        const adminName = process.env.DEFAULT_ADMIN_NAME || "System Admin";
+
+        const existingAdmin = await prisma.user.findFirst({
+            where: { role: Role.ADMIN },
+        });
+
+        if (!existingAdmin) {
+            const hashed = await bcrypt.hash(adminPassword, SALT_ROUNDS);
+            await prisma.user.create({
+                data: {
+                    email: adminEmail,
+                    name: adminName,
+                    password: hashed,
+                    role: Role.ADMIN,
+                },
+            });
+            console.log(`🛡️ Created default Admin user: ${adminEmail}`);
+        }
+    } catch (err) {
+        console.warn("⚠️ Could not ensure default admin:", err);
+    }
+}

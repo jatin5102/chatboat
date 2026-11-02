@@ -52,9 +52,20 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 app.options("*", cors({ origin: allowedOrigins, credentials: true }));
+
+// Serve static assets & uploaded files
+app.use("/uploads/assets", express.static(path.join(process.cwd(), "assets")));
+app.use("/assets", express.static(path.join(process.cwd(), "assets")));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-// Serve static uploaded files from root uploads/ directory
-// app.use("/uploads", express.static(path.resolve("uploads")));
+
+app.get("/", (_req: Request, res: Response) => {
+    res.json({
+        success: true,
+        message: "Chatbot Backend API is online",
+        whatsapp: isWhatsAppReady ? "ONLINE" : "INITIALIZING",
+        timestamp: new Date().toISOString(),
+    });
+});
 
 app.use("/api/v1/admin/auth", authLimiter);
 app.use("/api/v1", apiLimiter);
@@ -84,6 +95,8 @@ function setupWhatsAppClient(): any {
                 "--no-first-run",
                 "--no-zygote",
                 "--disable-gpu",
+                "--disable-extensions",
+                "--disable-software-rasterizer",
             ],
         },
     });
@@ -210,20 +223,41 @@ app.get("/health", async (_req: Request, res: Response) => {
 });
 
 function cleanStaleLockfile(): void {
-    try {
-        const lockPath = path.resolve("./.wwebjs_auth/session/lockfile");
-        if (fs.existsSync(lockPath)) {
-            try {
-                fs.unlinkSync(lockPath);
-                console.log("🧹 Cleaned up stale lockfile from .wwebjs_auth/session/lockfile");
-            } catch (err: any) {
-                console.warn(
-                    "⚠️ Could not remove lockfile (may be locked by process):",
-                    err.message,
-                );
+    const authDir = path.resolve("./.wwebjs_auth");
+    if (!fs.existsSync(authDir)) return;
+
+    const lockNames = new Set([
+        "lockfile",
+        "SingletonLock",
+        "SingletonCookie",
+        "SingletonSocket",
+        "DevToolsActivePort",
+    ]);
+
+    function purgeLocks(currentDir: string): void {
+        try {
+            const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(currentDir, entry.name);
+                if (lockNames.has(entry.name) || entry.name.startsWith("Singleton")) {
+                    try {
+                        fs.unlinkSync(fullPath);
+                        console.log(`🧹 Cleaned up stale Chromium lock file: ${fullPath}`);
+                    } catch {
+                        try {
+                            fs.rmSync(fullPath, { force: true });
+                        } catch {}
+                    }
+                } else if (entry.isDirectory()) {
+                    purgeLocks(fullPath);
+                }
             }
+        } catch {
+            // Ignore access errors
         }
-    } catch {}
+    }
+
+    purgeLocks(authDir);
 }
 
 export async function initWhatsApp(): Promise<void> {
@@ -253,7 +287,21 @@ export async function initWhatsApp(): Promise<void> {
         cleanStaleLockfile();
 
         client = setupWhatsAppClient();
-        await client.initialize();
+        try {
+            await client.initialize();
+        } catch (initErr: any) {
+            const msg = String(initErr?.message || "");
+            // Detect Chromium ProcessSingleton lock failure (exit code 21)
+            if (msg.includes("Code: 21") || msg.includes("process_singleton") || msg.includes("profile appears to be in use")) {
+                console.warn("⚠️ Stale Chromium profile lock detected (Code 21). Purging locks and retrying initialization...");
+                cleanStaleLockfile();
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+                client = setupWhatsAppClient();
+                await client.initialize();
+            } else {
+                throw initErr;
+            }
+        }
     } catch (err: any) {
         console.error("❌ Failed to initialize WhatsApp client:", err);
         chatbotConnectionManager.setDisconnected();
@@ -282,14 +330,28 @@ export async function restartWhatsApp(): Promise<void> {
             client = null;
         }
 
-        // Give Puppeteer & Chrome 1 second to cleanly release files and lock handles
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Give Puppeteer & Chrome 1.5 seconds to cleanly release files and lock handles
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         cleanStaleLockfile();
 
         client = setupWhatsAppClient();
         // Launch initialization asynchronously without blocking caller indefinitely
-        client.initialize().catch((err: any) => {
-            console.error("❌ Error during WhatsApp restart initialization:", err);
+        client.initialize().catch(async (err: any) => {
+            const msg = String(err?.message || "");
+            if (msg.includes("Code: 21") || msg.includes("process_singleton") || msg.includes("profile appears to be in use")) {
+                console.warn("⚠️ Stale Chromium profile lock detected on restart. Purging and retrying...");
+                cleanStaleLockfile();
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+                try {
+                    client = setupWhatsAppClient();
+                    await client.initialize();
+                    return;
+                } catch (retryErr) {
+                    console.error("❌ Retry failed after Code 21:", retryErr);
+                }
+            } else {
+                console.error("❌ Error during WhatsApp restart initialization:", err);
+            }
             chatbotConnectionManager.setDisconnected();
         });
     } catch (err: any) {
