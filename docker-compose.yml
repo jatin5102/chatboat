@@ -19,9 +19,9 @@ services:
         networks:
             - chatbot-network
 
-    chaatbot-postgres:
+    chatbot-postgres:
         image: postgres:16
-        container_name: chaatbot-postgres
+        container_name: chatbot-postgres
         restart: always
         environment:
             POSTGRES_DB: ${POSTGRES_DB:-chatbot_db}
