@@ -12,7 +12,11 @@ export const apiLimiter = rateLimit({
     },
     // Skip rate limiting for specific conditions (e.g., local development or internal IPs)
     skip: (req) => {
-        const isLocal = req.ip === "::1" || req.ip === "127.0.0.1";
+        const isLocal =
+            req.ip === "::1" ||
+            req.ip === "127.0.0.1" ||
+            req.ip === "::ffff:127.0.0.1" ||
+            process.env.NODE_ENV !== "production";
         return isLocal;
     },
 });
@@ -20,11 +24,19 @@ export const apiLimiter = rateLimit({
 // Stricter limiter for authentication routes (login, register)
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // Limit each IP to 20 login/register requests per windowMs
+    max: process.env.NODE_ENV === "production" ? 50 : 500,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
         success: false,
         message: "Too many authentication attempts, please try again after 15 minutes",
+    },
+    skip: (req) => {
+        const isLocal =
+            req.ip === "::1" ||
+            req.ip === "127.0.0.1" ||
+            req.ip === "::ffff:127.0.0.1" ||
+            process.env.NODE_ENV !== "production";
+        return isLocal;
     },
 });
