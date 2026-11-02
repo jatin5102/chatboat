@@ -15,6 +15,7 @@ services:
                 condition: service_healthy
         volumes:
             - chatbot_uploads:/app/uploads
+            - chatbot_auth:/app/.wwebjs_auth
         networks:
             - chatbot-network
 
@@ -41,6 +42,7 @@ services:
 volumes:
     chatbot_pg_data:
     chatbot_uploads:
+    chatbot_auth:
 
 networks:
     chatbot-network:
