@@ -201,8 +201,6 @@ export class CollateralService {
      */
     public async getActiveCollateralsForPlatter(platterId?: string): Promise<CollateralItem[]> {
         if (platterId) {
-            await this.ensurePlatterCollaterals(platterId);
-
             const platterCollaterals = await prisma.projectCollateral.findMany({
                 where: {
                     platterId,
@@ -221,8 +219,6 @@ export class CollateralService {
                 return platterCollaterals as CollateralItem[];
             }
         }
-
-        await this.ensureDefaultCollaterals();
 
         const masterCollaterals = await prisma.projectCollateral.findMany({
             where: {
@@ -248,8 +244,6 @@ export class CollateralService {
         platterId: string,
         activeCodes: string[],
     ): Promise<CollateralItem[]> {
-        await this.ensurePlatterCollaterals(platterId);
-
         const upperCodes = activeCodes.map((c) => c.toUpperCase());
 
         await prisma.projectCollateral.updateMany({
@@ -331,8 +325,6 @@ export class CollateralService {
         projectId: string,
         activeCodes: string[],
     ): Promise<CollateralItem[]> {
-        await this.ensureProjectCollaterals(projectId);
-
         const upperCodes = activeCodes.map((c) => c.toUpperCase());
 
         await prisma.projectCollateral.updateMany({
@@ -358,13 +350,12 @@ export class CollateralService {
      * List all collaterals with optional filters.
      */
     public async getAllCollaterals(filter?: {
-        platterId?: string;
-        projectId?: string;
+        platterId?: any;
+        projectId?: any;
         status?: boolean;
         code?: string;
+        OR?: any;
     }): Promise<CollateralItem[]> {
-        await this.ensureDefaultCollaterals();
-
         const where: any = {};
         if (filter?.platterId !== undefined) {
             where.platterId = filter.platterId === "null" ? null : filter.platterId;
@@ -377,6 +368,9 @@ export class CollateralService {
         }
         if (filter?.code) {
             where.code = filter.code;
+        }
+        if (filter?.OR) {
+            where.OR = filter.OR;
         }
 
         return prisma.projectCollateral.findMany({

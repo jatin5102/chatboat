@@ -39,16 +39,68 @@ export async function transformCollateralUrls(item: any): Promise<any> {
 }
 
 /**
- * Get all collaterals with optional query filters (platterId, projectId, status, code) and pagination
+ * Get all collaterals with optional query filters (platterId, projectId, status, code, search) and pagination
  */
 export const getCollaterals = asyncHandler(async (req: Request, res: Response) => {
-    const { platterId, projectId, status, code, page, limit, all } = req.query;
+    const { platterId, platter, projectId, project, status, code, search, page, limit, all } =
+        req.query;
 
     const filter: any = {};
-    if (platterId) filter.platterId = String(platterId);
-    if (projectId) filter.projectId = String(projectId);
-    if (status !== undefined) filter.status = status === "true";
-    if (code) filter.code = String(code);
+
+    // Platter filter: supports ID, slug, 'null'/'master'/'none' for master collaterals, or 'all'/'any' for platter-linked collaterals
+    const rawPlatter = (platterId ?? platter) as string | undefined;
+    if (rawPlatter !== undefined && rawPlatter !== "") {
+        const pLower = String(rawPlatter).trim().toLowerCase();
+        if (pLower === "null" || pLower === "master" || pLower === "none" || pLower === "global") {
+            filter.platterId = null;
+        } else if (pLower === "all" || pLower === "any") {
+            filter.platterId = { not: null };
+        } else {
+            const foundPlatter = await prisma.platter.findFirst({
+                where: {
+                    OR: [{ id: String(rawPlatter) }, { slug: String(rawPlatter) }],
+                },
+                select: { id: true },
+            });
+            filter.platterId = foundPlatter ? foundPlatter.id : String(rawPlatter);
+        }
+    }
+
+    // Project filter: supports ID, slug, or 'null'/'none'
+    const rawProject = (projectId ?? project) as string | undefined;
+    if (rawProject !== undefined && rawProject !== "") {
+        const pLower = String(rawProject).trim().toLowerCase();
+        if (pLower === "null" || pLower === "none") {
+            filter.projectId = null;
+        } else {
+            const foundProject = await prisma.projects.findFirst({
+                where: {
+                    OR: [{ id: String(rawProject) }, { slug: String(rawProject) }],
+                },
+                select: { id: true },
+            });
+            filter.projectId = foundProject ? foundProject.id : String(rawProject);
+        }
+    }
+
+    if (status !== undefined && status !== "") {
+        filter.status = status === "true" || status === "1";
+    }
+
+    if (code) {
+        filter.code = String(code).toUpperCase();
+    }
+
+    if (search) {
+        const searchTerm = String(search).trim();
+        if (searchTerm) {
+            filter.OR = [
+                { title: { contains: searchTerm, mode: "insensitive" } },
+                { code: { contains: searchTerm, mode: "insensitive" } },
+                { subtitle: { contains: searchTerm, mode: "insensitive" } },
+            ];
+        }
+    }
 
     const pageNum = page ? Number(page) : all === "true" ? undefined : 1;
     const limitNum = limit ? Number(limit) : all === "true" ? undefined : 10;
@@ -614,7 +666,10 @@ export const updateCollateralMedia = asyncHandler(async (req: Request, res: Resp
                     fs.unlinkSync(fullPath);
                 }
             } catch (err) {
-                console.error(`Failed to delete previous physical file ${existingMedia.fileUrl}:`, err);
+                console.error(
+                    `Failed to delete previous physical file ${existingMedia.fileUrl}:`,
+                    err,
+                );
             }
         }
     } else if (fileUrl !== undefined) {

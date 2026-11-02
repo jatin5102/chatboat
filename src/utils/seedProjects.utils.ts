@@ -318,7 +318,9 @@ export async function seedProperties() {
         return;
     }
     if (process.env.RUN_SEED !== "true") {
-        console.log("ℹ️ Property seeding is disabled. (Set RUN_SEED=true if you want to run seeds manually)");
+        console.log(
+            "ℹ️ Property seeding is disabled. (Set RUN_SEED=true if you want to run seeds manually)",
+        );
         return;
     }
     console.log("🌱 Seeding M3M Noida Platters, Projects, Channel Partners & FAQs...");
