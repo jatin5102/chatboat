@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+    chatbotBE:
+        build: .
+        container_name: chatbotBE
+        restart: always
+        ports:
+            - "4002:4002"
+        env_file:
+            - .env
+        environment:
+            - DATABASE_URL=postgresql://${POSTGRES_USER:-chatbot_user}:${POSTGRES_PASSWORD:-chatbot@!7701^$%}@chatbot-postgres:5432/${POSTGRES_DB:-chatbot_db}?schema=public
+        depends_on:
+            chatbot-postgres:
+                condition: service_healthy
+        volumes:
+            - chatbot_uploads:/app/uploads
+        networks:
+            - chatbot-network
+
+    chaatbot-postgres:
+        image: postgres:16
+        container_name: chaatbot-postgres
+        restart: always
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB:-chatbot_db}
+            POSTGRES_USER: ${POSTGRES_USER:-chatbot_user}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatbot@!7701^$%}
+        ports:
+            - "5427:5432"
+        volumes:
+            - chatbot_pg_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        networks:
+            - chatbot-network
+
+volumes:
+    chatbot_pg_data:
+    chatbot_uploads:
+
+networks:
+    chatbot-network:

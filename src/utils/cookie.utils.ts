@@ -11,14 +11,16 @@ export const setAuthCookies = (
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? "strict" : "none",
+    sameSite: isProduction ? "strict" : "lax",
+    path: "/",
     maxAge: ENV.ACCESS_TOKEN_EXPIRY_MS,
   });
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? "strict" : "none",
+    sameSite: isProduction ? "strict" : "lax",
+    path: "/",
     maxAge: ENV.REFRESH_TOKEN_EXPIRY_MS,
   });
 };

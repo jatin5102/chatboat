@@ -26,7 +26,11 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(helmet());
 
-const allowedOrigins = ["http://localhost:3000"];
+const allowedOrigins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://chatbot.websitedesigningcompany.co.in",
+];
 
 app.use(
     cors({
@@ -47,7 +51,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
-app.options("*", cors());
+app.options("*", cors({ origin: allowedOrigins, credentials: true }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 // Serve static uploaded files from root uploads/ directory
 // app.use("/uploads", express.static(path.resolve("uploads")));
