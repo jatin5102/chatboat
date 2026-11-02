@@ -1,7 +1,6 @@
 import "dotenv/config";
 import app, { initWhatsApp } from "./app.js";
 import { prisma } from "./config/prisma.config.js";
-import { projectService } from "./services/project.service.js";
 import { ensureDefaultAdmin } from "./modules/auth/auth.service.js";
 import logger from "./utils/logger.utils.js";
 
@@ -16,10 +15,9 @@ async function startServer() {
     // Ensure default admin user is present
     await ensureDefaultAdmin();
 
-    // Ensure projects and documents are ready in DB
-    await projectService.ensureProjectsLoaded();
+    // Check active projects in DB
     const count = await prisma.projects.count();
-    logger.info(`📦 Total active projects loaded in database: ${count}`);
+    logger.info(`📦 Total active projects in database: ${count}`);
 
     app.listen(PORT, async () => {
       logger.info(`🚀 API & Health Server running on http://localhost:${PORT}`);

@@ -2,7 +2,6 @@ import path from "node:path";
 import fs from "node:fs";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { prisma } from "../config/prisma.config.js";
-import { seedProperties } from "../utils/seedProjects.utils.js";
 import { collateralService } from "./collateral.service.js";
 
 export interface BotProject {
@@ -161,17 +160,8 @@ export class ProjectService {
     }
 
     public async ensureProjectsLoaded(): Promise<void> {
-        const platterCount = await prisma.platter.count();
-        const projectCount = await prisma.projects.count();
-        if (platterCount === 0 || projectCount === 0) {
-            console.log("Seeding M3M Noida Platters, Projects, Documents & FAQs...");
-            await seedProperties();
-        }
-        await collateralService.ensureDefaultCollaterals();
-        const platters = await prisma.platter.findMany();
-        for (const plt of platters) {
-            await collateralService.ensurePlatterCollaterals(plt.id);
-        }
+        // Auto-seeding stopped
+        return;
     }
 
     /**
