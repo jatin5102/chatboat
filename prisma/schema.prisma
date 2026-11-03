@@ -74,7 +74,7 @@ model ChannelPartner {
   id           String   @id @default(cuid())
   fullName     String
   firmName     String? // Firm / Company Name
-  reraNumber   String?  @unique
+  reraNumber   String?
   mobileNo     String?
   emailAddress String?
   location     String?
