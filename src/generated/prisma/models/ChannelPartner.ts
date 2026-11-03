@@ -241,12 +241,12 @@ export type ChannelPartnerOrderByWithRelationInput = {
 
 export type ChannelPartnerWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  reraNumber?: string
   AND?: Prisma.ChannelPartnerWhereInput | Prisma.ChannelPartnerWhereInput[]
   OR?: Prisma.ChannelPartnerWhereInput[]
   NOT?: Prisma.ChannelPartnerWhereInput | Prisma.ChannelPartnerWhereInput[]
   fullName?: Prisma.StringFilter<"ChannelPartner"> | string
   firmName?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
+  reraNumber?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
   mobileNo?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
   emailAddress?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
   location?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
@@ -254,7 +254,7 @@ export type ChannelPartnerWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"ChannelPartner"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ChannelPartner"> | Date | string
   sessions?: Prisma.ChatbotSessionListRelationFilter
-}, "id" | "reraNumber">
+}, "id">
 
 export type ChannelPartnerOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

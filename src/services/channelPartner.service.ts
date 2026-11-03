@@ -42,7 +42,7 @@ export class ChannelPartnerService {
 
     public async findByRera(reraNumber: string): Promise<ChannelPartnerData | null> {
         const cleanRera = reraNumber.trim();
-        return prisma.channelPartner.findUnique({
+        return prisma.channelPartner.findFirst({
             where: { reraNumber: cleanRera },
         });
     }
@@ -112,7 +112,7 @@ export class ChannelPartnerService {
         mobileNo: string;
     }): Promise<ChannelPartnerData> {
         const cleanRera = data.reraNumber.trim();
-        const existing = await prisma.channelPartner.findUnique({
+        const existing = await prisma.channelPartner.findFirst({
             where: { reraNumber: cleanRera },
         });
 
