@@ -73,9 +73,9 @@ model Platter {
 model ChannelPartner {
   id           String   @id @default(cuid())
   fullName     String
-  firmName     String // Firm / Company Name
-  reraNumber   String   @unique
-  mobileNo     String
+  firmName     String? // Firm / Company Name
+  reraNumber   String?  @unique
+  mobileNo     String?
   emailAddress String?
   location     String?
   status       Boolean  @default(true)

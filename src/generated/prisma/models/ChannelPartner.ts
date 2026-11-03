@@ -180,9 +180,9 @@ export type ChannelPartnerGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 export type ChannelPartnerGroupByOutputType = {
   id: string
   fullName: string
-  firmName: string
-  reraNumber: string
-  mobileNo: string
+  firmName: string | null
+  reraNumber: string | null
+  mobileNo: string | null
   emailAddress: string | null
   location: string | null
   status: boolean
@@ -214,9 +214,9 @@ export type ChannelPartnerWhereInput = {
   NOT?: Prisma.ChannelPartnerWhereInput | Prisma.ChannelPartnerWhereInput[]
   id?: Prisma.StringFilter<"ChannelPartner"> | string
   fullName?: Prisma.StringFilter<"ChannelPartner"> | string
-  firmName?: Prisma.StringFilter<"ChannelPartner"> | string
-  reraNumber?: Prisma.StringFilter<"ChannelPartner"> | string
-  mobileNo?: Prisma.StringFilter<"ChannelPartner"> | string
+  firmName?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
+  reraNumber?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
+  mobileNo?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
   emailAddress?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
   location?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
   status?: Prisma.BoolFilter<"ChannelPartner"> | boolean
@@ -228,9 +228,9 @@ export type ChannelPartnerWhereInput = {
 export type ChannelPartnerOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
-  firmName?: Prisma.SortOrder
-  reraNumber?: Prisma.SortOrder
-  mobileNo?: Prisma.SortOrder
+  firmName?: Prisma.SortOrderInput | Prisma.SortOrder
+  reraNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  mobileNo?: Prisma.SortOrderInput | Prisma.SortOrder
   emailAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -246,8 +246,8 @@ export type ChannelPartnerWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ChannelPartnerWhereInput[]
   NOT?: Prisma.ChannelPartnerWhereInput | Prisma.ChannelPartnerWhereInput[]
   fullName?: Prisma.StringFilter<"ChannelPartner"> | string
-  firmName?: Prisma.StringFilter<"ChannelPartner"> | string
-  mobileNo?: Prisma.StringFilter<"ChannelPartner"> | string
+  firmName?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
+  mobileNo?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
   emailAddress?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
   location?: Prisma.StringNullableFilter<"ChannelPartner"> | string | null
   status?: Prisma.BoolFilter<"ChannelPartner"> | boolean
@@ -259,9 +259,9 @@ export type ChannelPartnerWhereUniqueInput = Prisma.AtLeast<{
 export type ChannelPartnerOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
-  firmName?: Prisma.SortOrder
-  reraNumber?: Prisma.SortOrder
-  mobileNo?: Prisma.SortOrder
+  firmName?: Prisma.SortOrderInput | Prisma.SortOrder
+  reraNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  mobileNo?: Prisma.SortOrderInput | Prisma.SortOrder
   emailAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -278,9 +278,9 @@ export type ChannelPartnerScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ChannelPartnerScalarWhereWithAggregatesInput | Prisma.ChannelPartnerScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"ChannelPartner"> | string
   fullName?: Prisma.StringWithAggregatesFilter<"ChannelPartner"> | string
-  firmName?: Prisma.StringWithAggregatesFilter<"ChannelPartner"> | string
-  reraNumber?: Prisma.StringWithAggregatesFilter<"ChannelPartner"> | string
-  mobileNo?: Prisma.StringWithAggregatesFilter<"ChannelPartner"> | string
+  firmName?: Prisma.StringNullableWithAggregatesFilter<"ChannelPartner"> | string | null
+  reraNumber?: Prisma.StringNullableWithAggregatesFilter<"ChannelPartner"> | string | null
+  mobileNo?: Prisma.StringNullableWithAggregatesFilter<"ChannelPartner"> | string | null
   emailAddress?: Prisma.StringNullableWithAggregatesFilter<"ChannelPartner"> | string | null
   location?: Prisma.StringNullableWithAggregatesFilter<"ChannelPartner"> | string | null
   status?: Prisma.BoolWithAggregatesFilter<"ChannelPartner"> | boolean
@@ -291,9 +291,9 @@ export type ChannelPartnerScalarWhereWithAggregatesInput = {
 export type ChannelPartnerCreateInput = {
   id?: string
   fullName: string
-  firmName: string
-  reraNumber: string
-  mobileNo: string
+  firmName?: string | null
+  reraNumber?: string | null
+  mobileNo?: string | null
   emailAddress?: string | null
   location?: string | null
   status?: boolean
@@ -305,9 +305,9 @@ export type ChannelPartnerCreateInput = {
 export type ChannelPartnerUncheckedCreateInput = {
   id?: string
   fullName: string
-  firmName: string
-  reraNumber: string
-  mobileNo: string
+  firmName?: string | null
+  reraNumber?: string | null
+  mobileNo?: string | null
   emailAddress?: string | null
   location?: string | null
   status?: boolean
@@ -319,9 +319,9 @@ export type ChannelPartnerUncheckedCreateInput = {
 export type ChannelPartnerUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
-  firmName?: Prisma.StringFieldUpdateOperationsInput | string
-  reraNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  mobileNo?: Prisma.StringFieldUpdateOperationsInput | string
+  firmName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reraNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobileNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -333,9 +333,9 @@ export type ChannelPartnerUpdateInput = {
 export type ChannelPartnerUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
-  firmName?: Prisma.StringFieldUpdateOperationsInput | string
-  reraNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  mobileNo?: Prisma.StringFieldUpdateOperationsInput | string
+  firmName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reraNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobileNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -347,9 +347,9 @@ export type ChannelPartnerUncheckedUpdateInput = {
 export type ChannelPartnerCreateManyInput = {
   id?: string
   fullName: string
-  firmName: string
-  reraNumber: string
-  mobileNo: string
+  firmName?: string | null
+  reraNumber?: string | null
+  mobileNo?: string | null
   emailAddress?: string | null
   location?: string | null
   status?: boolean
@@ -360,9 +360,9 @@ export type ChannelPartnerCreateManyInput = {
 export type ChannelPartnerUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
-  firmName?: Prisma.StringFieldUpdateOperationsInput | string
-  reraNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  mobileNo?: Prisma.StringFieldUpdateOperationsInput | string
+  firmName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reraNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobileNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -373,9 +373,9 @@ export type ChannelPartnerUpdateManyMutationInput = {
 export type ChannelPartnerUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
-  firmName?: Prisma.StringFieldUpdateOperationsInput | string
-  reraNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  mobileNo?: Prisma.StringFieldUpdateOperationsInput | string
+  firmName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reraNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobileNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -446,9 +446,9 @@ export type ChannelPartnerUpdateOneWithoutSessionsNestedInput = {
 export type ChannelPartnerCreateWithoutSessionsInput = {
   id?: string
   fullName: string
-  firmName: string
-  reraNumber: string
-  mobileNo: string
+  firmName?: string | null
+  reraNumber?: string | null
+  mobileNo?: string | null
   emailAddress?: string | null
   location?: string | null
   status?: boolean
@@ -459,9 +459,9 @@ export type ChannelPartnerCreateWithoutSessionsInput = {
 export type ChannelPartnerUncheckedCreateWithoutSessionsInput = {
   id?: string
   fullName: string
-  firmName: string
-  reraNumber: string
-  mobileNo: string
+  firmName?: string | null
+  reraNumber?: string | null
+  mobileNo?: string | null
   emailAddress?: string | null
   location?: string | null
   status?: boolean
@@ -488,9 +488,9 @@ export type ChannelPartnerUpdateToOneWithWhereWithoutSessionsInput = {
 export type ChannelPartnerUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
-  firmName?: Prisma.StringFieldUpdateOperationsInput | string
-  reraNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  mobileNo?: Prisma.StringFieldUpdateOperationsInput | string
+  firmName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reraNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobileNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -501,9 +501,9 @@ export type ChannelPartnerUpdateWithoutSessionsInput = {
 export type ChannelPartnerUncheckedUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
-  firmName?: Prisma.StringFieldUpdateOperationsInput | string
-  reraNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  mobileNo?: Prisma.StringFieldUpdateOperationsInput | string
+  firmName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reraNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobileNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -612,9 +612,9 @@ export type $ChannelPartnerPayload<ExtArgs extends runtime.Types.Extensions.Inte
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     fullName: string
-    firmName: string
-    reraNumber: string
-    mobileNo: string
+    firmName: string | null
+    reraNumber: string | null
+    mobileNo: string | null
     emailAddress: string | null
     location: string | null
     status: boolean
