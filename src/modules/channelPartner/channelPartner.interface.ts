@@ -1,9 +1,9 @@
 export interface IChannelPartner {
     id: string;
     fullName: string;
-    firmName: string;
-    reraNumber: string;
-    mobileNo: string;
+    firmName?: string | null;
+    reraNumber?: string | null;
+    mobileNo?: string | null;
     emailAddress?: string | null;
     location?: string | null;
     status: boolean;

@@ -3,9 +3,9 @@ import { prisma } from "../config/prisma.config.js";
 export interface ChannelPartnerData {
     id: string;
     fullName: string;
-    firmName: string;
-    reraNumber: string;
-    mobileNo: string;
+    firmName: string | null;
+    reraNumber: string | null;
+    mobileNo: string | null;
     emailAddress?: string | null;
     location?: string | null;
     status: boolean;
@@ -58,20 +58,20 @@ export class ChannelPartnerService {
 
     public async create(data: {
         fullName: string;
-        firmName: string;
-        reraNumber: string;
-        mobileNo: string;
-        emailAddress?: string;
-        location?: string;
+        firmName?: string | null;
+        reraNumber?: string | null;
+        mobileNo?: string | null;
+        emailAddress?: string | null;
+        location?: string | null;
         status?: boolean;
     }): Promise<ChannelPartnerData> {
         return prisma.channelPartner.create({
             data: {
                 fullName: data.fullName.trim(),
-                firmName: data.firmName.trim(),
-                reraNumber: data.reraNumber.trim(),
-                mobileNo: data.mobileNo.trim(),
-                emailAddress: data.emailAddress || null,
+                firmName: data.firmName ? data.firmName.trim() : null,
+                reraNumber: data.reraNumber ? data.reraNumber.trim() : null,
+                mobileNo: data.mobileNo ? data.mobileNo.trim() : null,
+                emailAddress: data.emailAddress ? data.emailAddress.trim() : null,
                 location: data.location || "Noida",
                 status: data.status !== undefined ? data.status : true,
             },
@@ -82,11 +82,11 @@ export class ChannelPartnerService {
         id: string,
         data: Partial<{
             fullName: string;
-            firmName: string;
-            reraNumber: string;
-            mobileNo: string;
-            emailAddress: string;
-            location: string;
+            firmName: string | null;
+            reraNumber: string | null;
+            mobileNo: string | null;
+            emailAddress: string | null;
+            location: string | null;
             status: boolean;
         }>,
     ): Promise<ChannelPartnerData> {
